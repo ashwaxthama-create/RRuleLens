@@ -1,0 +1,776 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRuleLens | SuccessFactors Rule Analyzer</title>
+
+<!-- External libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
+
+<style>
+:root {
+  --bg:#f3f6fb;
+  --navy:#101c36;
+  --blue:#4169e1;
+  --purple:#7454d6;
+  --text:#1d2940;
+  --muted:#718096;
+  --border:#e1e7f0;
+  --white:#ffffff;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header {
+  background:var(--navy);
+  color:white;
+  padding:19px 30px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+}
+.brand {display:flex;align-items:center;gap:12px}
+.logo {
+  width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,#6d8cff,#9b68dc);
+  display:grid;place-items:center;font-size:22px;font-weight:bold;
+}
+.brand h1 {font-size:21px;margin:0}
+.brand p {font-size:11px;color:#b8c5e0;margin:4px 0 0}
+.version {
+  border:1px solid #506080;border-radius:20px;
+  padding:6px 12px;font-size:11px;color:#d9e2f4;
+}
+.container {max-width:1450px;margin:auto;padding:25px}
+.hero {
+  background:linear-gradient(110deg,#172849,#293d70);
+  color:white;border-radius:16px;padding:25px 28px;margin-bottom:22px;
+}
+.hero h2 {margin:0 0 8px;font-size:24px}
+.hero p {margin:0;color:#d0daed;font-size:14px;line-height:1.6}
+.stats {
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:15px;margin-bottom:22px;
+}
+.stat {
+  background:white;border:1px solid var(--border);
+  border-radius:12px;padding:17px;
+}
+.stat span {font-size:12px;color:var(--muted)}
+.stat strong {display:block;font-size:25px;margin-top:7px}
+.layout {
+  display:grid;grid-template-columns:350px minmax(0,1fr);
+  gap:20px;align-items:start;
+}
+.panel {
+  background:white;border:1px solid var(--border);
+  border-radius:13px;padding:20px;margin-bottom:18px;
+}
+.panel h3 {font-size:15px;margin:0 0 15px}
+.panel p.help {font-size:12px;color:var(--muted);line-height:1.5}
+label {display:block;font-size:12px;font-weight:650;margin:14px 0 7px}
+input[type="text"], textarea, select {
+  width:100%;border:1px solid #d7deea;border-radius:8px;
+  padding:11px;font:inherit;font-size:13px;background:white;
+}
+textarea {min-height:190px;resize:vertical;line-height:1.55}
+input[type="file"] {
+  width:100%;font-size:12px;padding:10px;
+  border:1px dashed #b9c5d8;border-radius:8px;background:#f8faff;
+}
+button {
+  border:0;border-radius:8px;padding:10px 14px;
+  font-weight:650;font-size:12px;cursor:pointer;
+  background:var(--blue);color:white;
+}
+button:hover {filter:brightness(.94)}
+button.secondary {background:#edf1fa;color:#31415f}
+button.dark {background:#182849}
+button.purple {background:var(--purple)}
+button:disabled {opacity:.5;cursor:not-allowed}
+.full {width:100%;margin-top:10px}
+.actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.status {
+  margin-top:10px;padding:10px;border-radius:8px;
+  font-size:12px;background:#f0f4fb;color:#42516c;
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.status.error {background:#fff0f0;color:#a42c2c}
+.status.success {background:#eaf8ef;color:#20643b}
+.workspace {min-width:0}
+.tabs {display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.tab {
+  background:white;color:#56647c;border:1px solid var(--border);
+}
+.tab.active {background:var(--navy);color:white}
+.flow-wrap {
+  min-height:360px;overflow:auto;background:#fbfcff;
+  border:1px solid var(--border);border-radius:12px;padding:15px;
+}
+#flowchart {width:100%;min-width:500px;min-height:300px}
+.empty {
+  min-height:300px;display:grid;place-items:center;
+  color:#8b98ad;text-align:center;font-size:13px;
+}
+.evidence {
+  max-height:220px;overflow:auto;background:#f6f8fc;
+  padding:12px;border-radius:8px;font-size:12px;
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.small {font-size:11px;color:var(--muted);line-height:1.5}
+.footer {text-align:center;color:#8b96a8;font-size:11px;padding:25px}
+.node-text {font-size:12px;fill:#1d2940}
+.node-title {font-size:11px;font-weight:bold;fill:#263b61}
+@media(max-width:850px) {
+  .layout {grid-template-columns:1fr}
+  .stats {grid-template-columns:1fr}
+  header {padding:15px}
+  .container {padding:15px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">R</div>
+    <div>
+      <h1>RRuleLens</h1>
+      <p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p>
+    </div>
+  </div>
+  <div class="version">PROTOTYPE V0.1</div>
+</header>
+
+<main class="container">
+
+<section class="hero">
+  <h2>Understand your SuccessFactors Business Rules.</h2>
+  <p>Upload rule screenshots, Excel inventories, CSV files or XML exports.
+  Extract evidence, review the logic and generate a visual decision flow.</p>
+</section>
+
+<section class="stats">
+  <div class="stat">
+    <span>Files processed</span>
+    <strong id="fileCount">0</strong>
+  </div>
+  <div class="stat">
+    <span>Rules identified</span>
+    <strong id="ruleCount">0</strong>
+  </div>
+  <div class="stat">
+    <span>Flowchart nodes</span>
+    <strong id="nodeCount">0</strong>
+  </div>
+</section>
+
+<div class="layout">
+
+<!-- LEFT PANEL -->
+<aside>
+
+  <section class="panel">
+    <h3>01. Upload rule source</h3>
+
+    <label>Business rule screenshot</label>
+    <input type="file" id="imageFile" accept="image/*">
+    <button class="full purple" onclick="readScreenshot()">Extract screenshot text</button>
+
+    <label>Excel / CSV inventory</label>
+    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+    <button class="full" onclick="readSpreadsheet()">Import spreadsheet</button>
+
+    <label>XML rule export</label>
+    <input type="file" id="xmlFile" accept=".xml">
+    <button class="full dark" onclick="readXML()">Read XML</button>
+
+    <div id="uploadStatus" class="status">Waiting for a file.</div>
+    <p class="small">Files are processed in your browser. OCR and spreadsheet libraries are loaded from external CDNs. No SAP tenant connection is configured.</p>
+  </section>
+
+  <section class="panel">
+    <h3>02. Rule information</h3>
+
+    <label>Rule name</label>
+    <input type="text" id="ruleName" value="Sample Business Rule" placeholder="Enter rule name">
+
+    <label>Rule description</label>
+    <input type="text" id="ruleDescription" placeholder="What does this rule do?">
+
+    <label>Source evidence / extracted text</label>
+    <div id="evidence" class="evidence">Uploaded file content will appear here.</div>
+  </section>
+
+</aside>
+
+<!-- RIGHT PANEL -->
+<section class="workspace">
+
+  <section class="panel">
+    <h3>03. Review and define rule logic</h3>
+    <p class="help">Review the extracted evidence and enter the rule logic below. Use the supported format for this prototype.</p>
+
+    <textarea id="logicInput">IF employee status is Active
+THEN set employee group to Permanent
+ELSE IF employee status is Inactive
+THEN set employee group to Former Employee
+ELSE
+THEN set employee group to Pending</textarea>
+
+    <div class="actions">
+      <button onclick="generateFlow()">Generate flowchart</button>
+      <button class="secondary" onclick="loadExample()">Load example</button>
+      <button class="secondary" onclick="clearLogic()">Clear</button>
+    </div>
+    <div id="logicStatus" class="status">Ready to generate a flowchart.</div>
+  </section>
+
+  <section class="panel">
+    <h3>04. Rule visualization</h3>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('flow',this)">Flowchart</button>
+      <button class="tab" onclick="showTab('evidenceView',this)">Source evidence</button>
+    </div>
+
+    <div id="flowView">
+      <div class="flow-wrap">
+        <div id="emptyState" class="empty">
+          <div>
+            <div style="font-size:35px;margin-bottom:12px">◇</div>
+            <strong>No flowchart generated</strong>
+            <p>Enter rule logic and click Generate flowchart.</p>
+          </div>
+        </div>
+        <svg id="flowchart" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <div id="evidenceView" style="display:none">
+      <div id="evidenceFull" class="evidence">No source evidence yet.</div>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" onclick="exportPNG()">Export PNG</button>
+      <button class="secondary" onclick="exportPDF()">Export PDF</button>
+      <button class="secondary" onclick="exportExcel()">Export Excel</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>05. Analysis summary</h3>
+    <div id="analysisSummary" class="status">No analysis generated yet.</div>
+  </section>
+
+</section>
+</div>
+
+<div class="footer">
+  RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.1
+</div>
+
+</main>
+
+<script>
+let extractedText = "";
+let spreadsheetRows = [];
+let parsedNodes = [];
+
+function setStatus(id, message, type="") {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.className = "status " + type;
+}
+
+function updateEvidence(text) {
+  extractedText = text || "";
+  document.getElementById("evidence").textContent =
+    extractedText || "No text extracted.";
+  document.getElementById("evidenceFull").textContent =
+    extractedText || "No source evidence yet.";
+}
+
+function updateFileCount() {
+  const count = [
+    document.getElementById("imageFile").files.length,
+    document.getElementById("excelFile").files.length,
+    document.getElementById("xmlFile").files.length
+  ].reduce((a,b) => a+b,0);
+
+  document.getElementById("fileCount").textContent = count;
+}
+
+["imageFile","excelFile","xmlFile"].forEach(id => {
+  document.getElementById(id).addEventListener("change", updateFileCount);
+});
+
+// SCREENSHOT OCR
+async function readScreenshot() {
+  const file = document.getElementById("imageFile").files[0];
+  if (!file) {
+    setStatus("uploadStatus","Please select a screenshot first.","error");
+    return;
+  }
+
+  if (!window.Tesseract) {
+    setStatus("uploadStatus","OCR library did not load. Check your internet connection and refresh.","error");
+    return;
+  }
+
+  setStatus("uploadStatus","Reading screenshot. OCR may take a few moments...");
+
+  try {
+    const result = await Tesseract.recognize(file,"eng",{
+      logger: m => {
+        if (m.status === "recognizing text") {
+          setStatus("uploadStatus","Extracting text: "+Math.round(m.progress*100)+"%");
+        }
+      }
+    });
+
+    updateEvidence(result.data.text);
+    setStatus("uploadStatus","Screenshot text extracted. Review the text before using it as rule logic.","success");
+  } catch (error) {
+    setStatus("uploadStatus","OCR failed: "+error.message,"error");
+  }
+}
+
+// EXCEL AND CSV
+async function readSpreadsheet() {
+  const file = document.getElementById("excelFile").files[0];
+  if (!file) {
+    setStatus("uploadStatus","Please select an Excel or CSV file.","error");
+    return;
+  }
+
+  if (!window.XLSX) {
+    setStatus("uploadStatus","Spreadsheet library did not load. Check your internet connection.","error");
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer,{type:"array"});
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    spreadsheetRows = XLSX.utils.sheet_to_json(sheet,{defval:""});
+    const text = XLSX.utils.sheet_to_csv(sheet);
+
+    updateEvidence(text);
+
+    if (spreadsheetRows.length) {
+      document.getElementById("ruleCount").textContent = spreadsheetRows.length;
+      const first = spreadsheetRows[0];
+      const nameKey = Object.keys(first).find(k => /rule.?name|name/i.test(k));
+      if (nameKey && first[nameKey]) {
+        document.getElementById("ruleName").value = first[nameKey];
+      }
+    }
+
+    setStatus("uploadStatus",
+      "Imported "+spreadsheetRows.length+" spreadsheet rows from "+file.name+
+      ". This is inventory extraction, not full rule interpretation.","success");
+  } catch(error) {
+    setStatus("uploadStatus","Spreadsheet import failed: "+error.message,"error");
+  }
+}
+
+// XML
+async function readXML() {
+  const file = document.getElementById("xmlFile").files[0];
+  if (!file) {
+    setStatus("uploadStatus","Please select an XML file.","error");
+    return;
+  }
+
+  try {
+    const xml = await file.text();
+    const doc = new DOMParser().parseFromString(xml,"application/xml");
+
+    if (doc.querySelector("parsererror")) {
+      throw new Error("Invalid XML structure.");
+    }
+
+    const lines = [];
+    function walk(node, depth=0) {
+      if (node.nodeType !== 1) return;
+
+      const attrs = [...node.attributes]
+        .map(a => a.name+"="+a.value).join(" ");
+
+      const value = [...node.childNodes]
+        .filter(n => n.nodeType === 3)
+        .map(n => n.nodeValue.trim())
+        .filter(Boolean).join(" ");
+
+      lines.push("  ".repeat(Math.min(depth,8))+
+        "<"+node.tagName+(attrs ? " "+attrs : "")+">"+
+        (value ? " "+value : ""));
+
+      [...node.children].forEach(child => walk(child,depth+1));
+    }
+
+    walk(doc.documentElement);
+    updateEvidence(lines.join("\n"));
+
+    setStatus("uploadStatus",
+      "XML loaded and its structure extracted. SAP-specific rule semantics have not yet been interpreted.","success");
+  } catch(error) {
+    setStatus("uploadStatus","XML import failed: "+error.message,"error");
+  }
+}
+
+// RULE LOGIC PARSER
+function parseLogic(source) {
+  const lines = source.split(/\r?\n/)
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  const nodes = [];
+  let current = null;
+
+  for (const line of lines) {
+    const upper = line.toUpperCase();
+
+    if (/^IF\s+/i.test(line)) {
+      current = {type:"condition",label:line.replace(/^IF\s+/i,"").trim(),action:""};
+      nodes.push(current);
+    }
+    else if (/^ELSE\s+IF\s+/i.test(line)) {
+      current = {type:"condition",label:line.replace(/^ELSE\s+IF\s+/i,"").trim(),action:""};
+      nodes.push(current);
+    }
+    else if (/^ELSE\b/i.test(line)) {
+      current = {type:"else",label:"Otherwise",action:""};
+      nodes.push(current);
+    }
+    else if (/^(THEN|SET|DO)\b/i.test(line)) {
+      if (!current) {
+        current = {type:"action",label:"Action",action:""};
+        nodes.push(current);
+      }
+      current.action += (current.action ? " " : "") +
+        line.replace(/^(THEN|SET|DO)\s*/i,"");
+    }
+    else if (current) {
+      current.action += (current.action ? " " : "") + line;
+    }
+    else {
+      current = {type:"condition",label:line,action:""};
+      nodes.push(current);
+    }
+  }
+
+  return nodes;
+}
+
+function loadExample() {
+  document.getElementById("logicInput").value =
+`IF employee status is Active
+THEN set employee group to Permanent
+ELSE IF employee status is Inactive
+THEN set employee group to Former Employee
+ELSE
+THEN set employee group to Pending`;
+}
+
+function clearLogic() {
+  document.getElementById("logicInput").value = "";
+  document.getElementById("flowchart").style.display = "none";
+  document.getElementById("emptyState").style.display = "grid";
+  parsedNodes = [];
+  document.getElementById("nodeCount").textContent = "0";
+  document.getElementById("analysisSummary").textContent = "No analysis generated yet.";
+}
+
+function escapeHTML(text) {
+  return String(text).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+// FLOWCHART GENERATOR
+function generateFlow() {
+  const source = document.getElementById("logicInput").value.trim();
+
+  if (!source) {
+    setStatus("logicStatus","Enter rule logic first.","error");
+    return;
+  }
+
+  parsedNodes = parseLogic(source);
+
+  if (!parsedNodes.length) {
+    setStatus("logicStatus","No recognizable logic found.","error");
+    return;
+  }
+
+  drawFlowchart(parsedNodes);
+
+  document.getElementById("nodeCount").textContent =
+    parsedNodes.length + 2;
+
+  document.getElementById("ruleCount").textContent = "1";
+
+  const conditions = parsedNodes.filter(n => n.type==="condition").length;
+  const actions = parsedNodes.filter(n => n.action).length;
+  const emptyActions = parsedNodes.filter(n => !n.action).length;
+
+  document.getElementById("analysisSummary").textContent =
+    "Rule: "+document.getElementById("ruleName").value+
+    "\nConditions identified: "+conditions+
+    "\nActions identified: "+actions+
+    "\nBranches without a recognized action: "+emptyActions+
+    "\n\nReview required: This prototype uses simple line-based parsing. " +
+    "It does not yet validate nested conditions, AND/OR precedence, " +
+    "SAP rule functions, or execution order.";
+
+  setStatus("logicStatus","Flowchart generated. Verify every condition and action against the original rule.","success");
+}
+
+function drawFlowchart(nodes) {
+  const svg = document.getElementById("flowchart");
+  const width = 760;
+  const boxW = 470;
+  const boxH = 65;
+  const gap = 38;
+  const startX = (width-boxW)/2;
+  const startY = 30;
+  const height = startY + (nodes.length+2)*(boxH+gap)+20;
+
+  svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  svg.setAttribute("height",height);
+  svg.innerHTML = "";
+
+  function add(tag,attrs,parent=svg) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg",tag);
+    Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v));
+    parent.appendChild(el);
+    return el;
+  }
+
+  function textLine(x,y,value,cls="node-text") {
+    const t = add("text",{x,y,class:cls,"text-anchor":"middle"});
+    t.textContent = value;
+    return t;
+  }
+
+  function wrap(value,max=55) {
+    const words = String(value).split(/\s+/);
+    const lines = [];
+    let line = "";
+    words.forEach(word => {
+      if ((line+" "+word).trim().length > max && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = (line+" "+word).trim();
+      }
+    });
+    if (line) lines.push(line);
+    return lines.slice(0,3);
+  }
+
+  const start = add("rect",{
+    x:startX+125,y:startY,width:220,height:42,rx:20,
+    fill:"#e8efff",stroke:"#4169e1","stroke-width":2
+  });
+  textLine(width/2,startY+26,"START","node-title");
+
+  let previousY = startY+42;
+
+  nodes.forEach((node,index) => {
+    const y = startY+42+gap+index*(boxH+gap);
+
+    add("line",{
+      x1:width/2,y1:previousY,x2:width/2,y2:y,
+      stroke:"#8c9bb5","stroke-width":2
+    });
+
+    const fill = node.type==="else" ? "#fff4e5" : "#eef2ff";
+    const stroke = node.type==="else" ? "#e3a03d" : "#7289dc";
+
+    if (node.type==="condition") {
+      const points = [
+        `${width/2},${y}`,
+        `${width/2+boxW/2},${y+boxH/2}`,
+        `${width/2},${y+boxH}`,
+        `${width/2-boxW/2},${y+boxH/2}`
+      ].join(" ");
+
+      add("polygon",{
+        points,fill,stroke,"stroke-width":2
+      });
+    } else {
+      add("rect",{
+        x:startX,y,width:boxW,height:boxH,rx:10,
+        fill,stroke,"stroke-width":2
+      });
+    }
+
+    const title = node.type==="else" ? "ELSE BRANCH" :
+      node.type==="condition" ? "CONDITION "+(index+1) : "ACTION";
+
+    textLine(width/2,y+21,title,"node-title");
+
+    const label = node.type==="condition" ? node.label :
+      (node.action || node.label);
+
+    const lines = wrap(label,55);
+    lines.forEach((line,i) => {
+      textLine(width/2,y+40+i*14,line);
+    });
+
+    previousY = y+boxH;
+  });
+
+  const endY = previousY+gap;
+
+  add("line",{
+    x1:width/2,y1:previousY,x2:width/2,y2:endY,
+    stroke:"#8c9bb5","stroke-width":2
+  });
+
+  add("rect",{
+    x:startX+125,y:endY,width:220,height:42,rx:20,
+    fill:"#e5f7ec",stroke:"#3b9a62","stroke-width":2
+  });
+  textLine(width/2,endY+26,"END","node-title");
+
+  document.getElementById("emptyState").style.display = "none";
+  svg.style.display = "block";
+}
+
+// TABS
+function showTab(tab,button) {
+  document.getElementById("flowView").style.display =
+    tab==="flow" ? "block" : "none";
+  document.getElementById("evidenceView").style.display =
+    tab==="evidenceView" ? "block" : "none";
+
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
+}
+
+// PNG EXPORT
+function exportPNG() {
+  if (!parsedNodes.length) {
+    alert("Generate a flowchart first.");
+    return;
+  }
+
+  const svg = document.getElementById("flowchart");
+  const copy = svg.cloneNode(true);
+  copy.setAttribute("xmlns","http://www.w3.org/2000/svg");
+
+  const data = new XMLSerializer().serializeToString(copy);
+  const blob = new Blob([data],{type:"image/svg+xml;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const image = new Image();
+
+  image.onload = function() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1520;
+    canvas.height = Number(svg.getAttribute("height"))*2;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(image,0,0,canvas.width,canvas.height);
+
+    const link = document.createElement("a");
+    link.download = "RRuleLens_Flowchart.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  image.onerror = () => {
+    URL.revokeObjectURL(url);
+    alert("PNG export failed.");
+  };
+  image.src = url;
+}
+
+// PDF EXPORT
+function exportPDF() {
+  if (!parsedNodes.length) {
+    alert("Generate a flowchart first.");
+    return;
+  }
+
+  const svg = document.getElementById("flowchart").outerHTML;
+  const name = escapeHTML(document.getElementById("ruleName").value);
+  const description = escapeHTML(document.getElementById("ruleDescription").value);
+
+  const win = window.open("","_blank");
+  if (!win) {
+    alert("Allow pop-ups to export PDF.");
+    return;
+  }
+
+  win.document.write(`
+    <!DOCTYPE html><html><head><title>RRuleLens Report</title>
+    <style>
+      body{font-family:Arial;padding:30px;color:#1d2940}
+      h1{font-size:22px}p{font-size:13px}
+      svg{width:100%;height:auto}
+      @media print{button{display:none}}
+    </style></head><body>
+    <h1>RRuleLens - Business Rule Flowchart</h1>
+    <p><b>Rule:</b> ${name}</p>
+    <p><b>Description:</b> ${description}</p>
+    ${svg}
+    <p>Generated by RRuleLens Prototype V0.1. Validate against the original SAP configuration.</p>
+    <button onclick="window.print()">Print / Save as PDF</button>
+    </body></html>
+  `);
+  win.document.close();
+}
+
+// EXCEL EXPORT
+function exportExcel() {
+  if (!parsedNodes.length) {
+    alert("Generate a flowchart first.");
+    return;
+  }
+
+  if (!window.XLSX) {
+    alert("Excel library is unavailable.");
+    return;
+  }
+
+  const rows = parsedNodes.map((node,index)=>({
+    "Sequence":index+1,
+    "Type":node.type,
+    "Condition / Branch":node.label,
+    "Action":node.action
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,"Rule Analysis");
+
+  const meta = XLSX.utils.aoa_to_sheet([
+    ["RRuleLens Rule Analysis"],
+    ["Rule Name",document.getElementById("ruleName").value],
+    ["Description",document.getElementById("ruleDescription").value],
+    ["Conditions",parsedNodes.filter(n=>n.type==="condition").length],
+    ["Generated",new Date().toLocaleString()],
+    ["Note","Prototype parsing. Validate against original SAP configuration."]
+  ]);
+
+  XLSX.utils.book_append_sheet(wb,meta,"Summary");
+  XLSX.writeFile(wb,"RRuleLens_Rule_Analysis.xlsx");
+}
+</script>
+</body>
+</html>
