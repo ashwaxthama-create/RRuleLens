@@ -1,722 +1,425 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RRuleLens | SAP SuccessFactors Rule Analyzer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RRuleLens | SuccessFactors Business Rule Analyzer</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
 <style>
-:root{--navy:#101c36;--blue:#4169e1;--purple:#7454d6;--red:#ff4545;--bg:#f3f6fb;--text:#1d2940;--muted:#718096;--border:#e1e7f0}
+:root{
+ --navy:#101c36;--navy2:#1d3158;--blue:#4169e1;--purple:#7454d6;
+ --red:#ff4545;--bg:#f3f6fb;--text:#1d2940;--muted:#718096;
+ --border:#dfe6f1;--green:#27965b;--amber:#c88722;--white:#fff;
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
-header{background:var(--navy);color:white;padding:18px 30px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+body{margin:0;font-family:Inter,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:white;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:15px}
 .brand{display:flex;align-items:center;gap:12px}
-.logo{width:43px;height:43px;border-radius:12px;background:linear-gradient(135deg,#6d8cff,#9b68dc);display:grid;place-items:center;font-size:23px;font-weight:bold}
-.brand h1{margin:0;font-size:22px}
-.brand p{margin:4px 0 0;font-size:11px;color:#b8c5e0}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6d8cff,#9b68dc);display:grid;place-items:center;font-size:23px;font-weight:800}
+.brand h1{margin:0;font-size:22px;letter-spacing:-.5px}
 .brand-r{color:var(--red)}
-.version{border:1px solid #506080;border-radius:20px;padding:7px 13px;font-size:11px;color:#d9e2f4}
-.container{max-width:1450px;margin:auto;padding:25px}
-.hero{background:linear-gradient(110deg,#172849,#293d70);color:white;border-radius:16px;padding:26px;margin-bottom:22px}
-.hero h2{margin:0 0 8px;font-size:25px}
-.hero p{margin:0;color:#d0daed;font-size:14px;line-height:1.6}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:22px}
-.stat{background:white;border:1px solid var(--border);border-radius:12px;padding:18px}
-.stat span{font-size:12px;color:var(--muted)}
-.stat strong{display:block;font-size:26px;margin-top:7px}
-.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:20px;align-items:start}
-.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:20px;margin-bottom:18px}
-.panel h3{font-size:15px;margin:0 0 15px}
-label{display:block;font-size:12px;font-weight:650;margin:15px 0 7px}
-input[type=text],textarea{width:100%;border:1px solid #d7deea;border-radius:8px;padding:11px;font:inherit;font-size:13px;background:white}
-textarea{min-height:190px;resize:vertical;line-height:1.55}
-input[type=file]{width:100%;font-size:12px;padding:10px;border:1px dashed #b9c5d8;border-radius:8px;background:#f8faff}
-button{border:0;border-radius:8px;padding:10px 14px;font-weight:650;font-size:12px;cursor:pointer;background:var(--blue);color:white}
-button:hover{filter:brightness(.94)}
+.brand p{margin:4px 0 0;font-size:10px;letter-spacing:.7px;color:#c1cde2}
+.version{border:1px solid #536483;border-radius:20px;padding:7px 13px;font-size:10px;color:#e0e8f6}
+.container{max-width:1600px;margin:auto;padding:22px}
+.hero{background:linear-gradient(110deg,#172849,#2b4176);color:white;border-radius:15px;padding:22px 25px;margin-bottom:18px}
+.hero h2{margin:0 0 7px;font-size:23px}.hero p{margin:0;color:#d4def0;font-size:13px;line-height:1.55}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px}
+.metric{background:white;border:1px solid var(--border);border-radius:12px;padding:13px 17px}
+.metric span{font-size:11px;color:var(--muted)}.metric strong{display:block;font-size:22px;margin-top:5px;color:var(--navy)}
+.main-layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
+.left-column,.right-column{min-width:0}
+.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:17px;margin-bottom:16px;box-shadow:0 2px 8px rgba(20,42,80,.025)}
+.panel h3{font-size:14px;margin:0 0 13px;color:#172747}
+.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.step{width:25px;height:25px;border-radius:8px;background:#edf1ff;color:#3859c9;display:grid;place-items:center;font-size:11px;font-weight:800}
+label{display:block;font-size:11px;font-weight:700;margin:13px 0 6px}
+input[type=text],textarea{width:100%;border:1px solid #d7deea;border-radius:8px;padding:10px;font:inherit;font-size:12px;background:#fff;color:var(--text)}
+textarea{resize:vertical;line-height:1.5;min-height:170px}
+input[type=file]{width:100%;font-size:11px;padding:9px;border:1px dashed #b9c5d8;border-radius:8px;background:#f8faff}
+button{border:0;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px;cursor:pointer;background:var(--blue);color:white;transition:transform .12s,filter .12s}
+button:hover{filter:brightness(.96);transform:translateY(-1px)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 button.secondary{background:#edf1fa;color:#31415f}
 button.dark{background:#182849}
 button.purple{background:var(--purple)}
-button:disabled{opacity:.5;cursor:wait}
-.full{width:100%;margin-top:10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.status{margin-top:10px;padding:10px;border-radius:8px;font-size:12px;background:#f0f4fb;color:#42516c;white-space:pre-wrap;overflow-wrap:anywhere}
-.status.error{background:#fff0f0;color:#a42c2c}
-.status.success{background:#eaf8ef;color:#20643b}
-.help{font-size:12px;color:var(--muted);line-height:1.5}
-.paste-zone{min-height:190px;border:2px dashed #9aabc5;border-radius:12px;background:#f7f9ff;display:flex;align-items:center;justify-content:center;text-align:center;padding:15px;cursor:pointer;overflow:hidden;transition:.2s}
+button.full{width:100%;margin-top:9px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.status{margin-top:9px;padding:9px 10px;border-radius:8px;font-size:11px;line-height:1.45;background:#f0f4fb;color:#42516c;white-space:pre-wrap;overflow-wrap:anywhere}
+.status.success{background:#eaf8ef;color:#20643b}.status.error{background:#fff0f0;color:#a42c2c}
+.small{font-size:10px;color:var(--muted);line-height:1.5}
+.paste-zone{min-height:165px;border:2px dashed #9aabc5;border-radius:11px;background:#f7f9ff;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;cursor:pointer;overflow:hidden}
 .paste-zone:hover,.paste-zone:focus,.paste-zone.dragover{border-color:var(--blue);background:#eef3ff;outline:none}
-.paste-zone strong{display:block;margin:9px 0;color:#253858;font-size:14px}
-.paste-zone p{font-size:13px;color:#536582;margin:7px 0}
-.paste-zone span{font-size:11px;color:#8995aa}
-.paste-zone img{max-width:100%;max-height:280px;border-radius:8px;object-fit:contain}
-.workspace{min-width:0}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
-.tab{background:white;color:#56647c;border:1px solid var(--border)}
-.tab.active{background:var(--navy);color:white}
-.flow-wrap{min-height:360px;overflow:auto;background:#fbfcff;border:1px solid var(--border);border-radius:12px;padding:15px}
-#flowchart{width:100%;min-width:500px;min-height:300px}
-.empty{min-height:300px;display:grid;place-items:center;color:#8b98ad;text-align:center;font-size:13px}
-.evidence{max-height:250px;overflow:auto;background:#f6f8fc;padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
-.small{font-size:11px;color:var(--muted);line-height:1.5}
-.footer{text-align:center;color:#8b96a8;font-size:11px;padding:25px}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:1fr}header{padding:15px}.container{padding:15px}}
+.paste-zone strong{display:block;margin:8px 0;color:#253858;font-size:12px}
+.paste-zone p{font-size:11px;color:#536582;margin:6px 0}
+.paste-zone span{font-size:10px;color:#8995aa}
+.paste-zone img{max-width:100%;max-height:235px;border-radius:7px;object-fit:contain}
+.top-panels{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,1.25fr);gap:15px;align-items:stretch}
+.top-panels .panel{margin-bottom:15px}
+#ruleSummary{min-height:170px}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.summary-item{background:#f6f8fc;border:1px solid #e8edf5;border-radius:9px;padding:10px;min-width:0}
+.summary-item h4{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#74819a;margin:0 0 6px}
+.summary-item p{font-size:11px;line-height:1.45;margin:0;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#edf1ff;color:#3d55a0;border-radius:20px;padding:5px 8px;font-size:10px;font-weight:700}
+.chip.neutral{background:#f0f2f6;color:#596579}
+.confidence{font-size:10px;color:#8a6a2c;margin-top:9px}
+.logic-panel textarea{min-height:180px}
+.flow-panel{margin-top:0}
+.flow-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.flow-toolbar p{margin:0;font-size:11px;color:var(--muted)}
+.flow-wrap{min-height:350px;overflow:auto;background:linear-gradient(180deg,#fbfcff,#f8faff);border:1px solid var(--border);border-radius:12px;padding:12px}
+#flowchart{display:block;width:100%;min-width:680px}
+.empty{min-height:320px;display:grid;place-items:center;color:#8b98ad;text-align:center;font-size:12px}
+.empty strong{color:#52627d}
+.evidence{max-height:240px;overflow:auto;background:#f6f8fc;padding:11px;border-radius:8px;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
+.footer{text-align:center;color:#8b96a8;font-size:10px;padding:20px}
+@media(max-width:1050px){.main-layout{grid-template-columns:290px minmax(0,1fr)}.top-panels{grid-template-columns:1fr}}
+@media(max-width:760px){header{padding:13px 16px}.container{padding:13px}.main-layout{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.summary-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header>
  <div class="brand">
   <div class="logo"><span class="brand-r">R</span></div>
-  <div>
-   <h1><span class="brand-r">R</span><span class="brand-r">R</span>uleLens</h1>
-   <p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p>
-  </div>
+  <div><h1><span class="brand-r">R</span><span class="brand-r">R</span>uleLens</h1><p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p></div>
  </div>
- <div class="version">PROTOTYPE V0.4</div>
+ <div class="version">PROTOTYPE V0.5</div>
 </header>
 
 <main class="container">
-<section class="hero">
- <h2>Understand your SuccessFactors Business Rules.</h2>
- <p>Paste a rule screenshot, upload Excel inventories or XML exports. Extract evidence, review rule logic and generate visual decision flows.</p>
-</section>
+ <section class="hero">
+  <h2>Understand what your SuccessFactors rules actually do.</h2>
+  <p>Paste a rule screenshot or import a rule inventory. RRuleLens extracts source evidence, prepares a rule-purpose summary and creates a cleaner visual representation for review.</p>
+ </section>
 
-<section class="stats">
- <div class="stat"><span>Files processed</span><strong id="fileCount">0</strong></div>
- <div class="stat"><span>Rules identified</span><strong id="ruleCount">0</strong></div>
- <div class="stat"><span>Flowchart nodes</span><strong id="nodeCount">0</strong></div>
-</section>
+ <section class="metrics">
+  <div class="metric"><span>Files processed</span><strong id="fileCount">0</strong></div>
+  <div class="metric"><span>Rules identified</span><strong id="ruleCount">0</strong></div>
+  <div class="metric"><span>Flowchart elements</span><strong id="nodeCount">0</strong></div>
+ </section>
 
-<div class="layout">
-<aside>
-<section class="panel">
- <h3>01. Screenshot and file input</h3>
- <label>Paste business rule screenshot</label>
-
- <div id="screenshotPasteZone" class="paste-zone" tabindex="0">
-  <div id="pastePlaceholder">
-   <div style="font-size:35px">📋</div>
-   <strong>Paste your screenshot here</strong>
-   <p>Click this area and press Ctrl + V</p>
-   <span>Or drag and drop an image</span>
-  </div>
-  <img id="screenshotPreview" style="display:none" alt="Pasted rule screenshot">
- </div>
-
- <button class="full purple" id="computeButton" onclick="computeAndTransfer()" disabled>Compute &amp; Transfer to Rule Logic</button>
- <button class="full secondary" onclick="clearScreenshot()">Remove screenshot</button>
-
- <label>Excel / CSV inventory</label>
- <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
- <button class="full" onclick="readSpreadsheet()">Import spreadsheet</button>
-
- <label>XML rule export</label>
- <input type="file" id="xmlFile" accept=".xml">
- <button class="full dark" onclick="readXML()">Read XML</button>
-
- <div id="uploadStatus" class="status">Paste a screenshot to enable Compute &amp; Transfer.</div>
- <p class="small">OCR and spreadsheet libraries load from external CDNs. Processing occurs in your browser. No external AI or SAP connection is used.</p>
-</section>
-
-<section class="panel">
- <h3>02. Rule information</h3>
- <label>Rule name</label>
- <input type="text" id="ruleName" value="Sample Business Rule" placeholder="Enter rule name">
- <label>Rule description</label>
- <input type="text" id="ruleDescription" placeholder="What does this rule do?">
- <label>Extracted source evidence</label>
- <div id="evidence" class="evidence">Pasted screenshot or imported file content will appear here.</div>
- <button class="full secondary" onclick="useEvidenceAsLogic()">Send extracted text to Rule Logic</button>
-</section>
-</aside>
-
-<section class="workspace">
-<section class="panel">
- <h3>03. Review and define rule logic</h3>
- <p class="help">The Compute button transfers OCR text into this block automatically. Review the extracted conditions and actions before generating the flowchart.</p>
- <textarea id="logicInput" placeholder="Paste a screenshot and click Compute & Transfer to Rule Logic..."></textarea>
- <div class="actions">
-  <button onclick="generateFlow()">Generate flowchart</button>
-  <button class="secondary" onclick="loadExample()">Load example</button>
-  <button class="secondary" onclick="clearLogic()">Clear</button>
- </div>
- <div id="logicStatus" class="status">Waiting for rule logic.</div>
-</section>
-
-<section class="panel">
- <h3>04. Rule visualization</h3>
- <div class="tabs">
-  <button class="tab active" onclick="showTab('flow',this)">Flowchart</button>
-  <button class="tab" onclick="showTab('evidenceView',this)">Source evidence</button>
- </div>
-
- <div id="flowView">
-  <div class="flow-wrap">
-   <div id="emptyState" class="empty">
-    <div>
-     <div style="font-size:35px;margin-bottom:12px">◇</div>
-     <strong>No flowchart generated</strong>
-     <p>Compute the screenshot, review the logic and click Generate flowchart.</p>
+ <div class="main-layout">
+  <!-- BLOCK 01: fixed in the left rail -->
+  <aside class="left-column">
+   <section class="panel">
+    <div class="panel-heading"><span class="step">01</span><h3>Screenshot and file input</h3></div>
+    <label>Paste business rule screenshot</label>
+    <div id="screenshotPasteZone" class="paste-zone" tabindex="0">
+     <div id="pastePlaceholder"><div style="font-size:30px">📋</div><strong>Paste screenshot here</strong><p>Click here, then press Ctrl + V</p><span>Or drag and drop an image</span></div>
+     <img id="screenshotPreview" style="display:none" alt="Pasted rule screenshot">
     </div>
+    <button class="full purple" id="computeButton" onclick="computeAndTransfer()" disabled>Compute &amp; Transfer to Rule Logic</button>
+    <button class="full secondary" onclick="clearScreenshot()">Remove screenshot</button>
+    <label>Excel / CSV inventory</label>
+    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+    <button class="full" onclick="readSpreadsheet()">Import spreadsheet</button>
+    <label>XML rule export</label>
+    <input type="file" id="xmlFile" accept=".xml">
+    <button class="full dark" onclick="readXML()">Read XML</button>
+    <div id="uploadStatus" class="status">Paste a screenshot to enable Compute.</div>
+    <p class="small">OCR and spreadsheet libraries load from public CDNs. Files are processed in this browser. No external AI service or SAP tenant connection is used.</p>
+   </section>
+
+   <section class="panel">
+    <div class="panel-heading"><span class="step">E</span><h3>Extracted source evidence</h3></div>
+    <div id="evidence" class="evidence">Pasted screenshot or imported file content will appear here.</div>
+    <button class="full secondary" onclick="useEvidenceAsLogic()">Transfer evidence to rule logic</button>
+   </section>
+  </aside>
+
+  <!-- BLOCKS 02 and 03 share the top row; visualization sits below -->
+  <section class="right-column">
+   <div class="top-panels">
+    <section class="panel">
+     <div class="panel-heading"><span class="step">02</span><h3>Rule information and logic</h3></div>
+     <label>Rule name</label>
+     <input type="text" id="ruleName" value="Untitled SuccessFactors Rule" placeholder="Enter rule name">
+     <label>Rule description (optional)</label>
+     <input type="text" id="ruleDescription" placeholder="Add business context if known">
+     <label>Extracted / editable rule logic</label>
+     <textarea id="logicInput" placeholder="Paste screenshot and click Compute, or transfer extracted evidence here. Review OCR text before analysis."></textarea>
+     <div class="actions">
+      <button onclick="generateAnalysis()">Analyze rule</button>
+      <button class="secondary" onclick="loadExample()">Load example</button>
+      <button class="secondary" onclick="clearLogic()">Clear</button>
+     </div>
+     <div id="logicStatus" class="status">Waiting for rule logic.</div>
+    </section>
+
+    <section class="panel">
+     <div class="panel-heading"><span class="step">03</span><h3>Rule purpose and impact summary</h3></div>
+     <div id="ruleSummary" class="status">Analyze a rule to generate a purpose summary, explain what it appears to do and identify likely impacted SuccessFactors components.</div>
+     <div class="summary-grid">
+      <div class="summary-item"><h4>Business purpose</h4><p id="purposeText">Not analyzed yet.</p></div>
+      <div class="summary-item"><h4>What the rule does</h4><p id="doesText">Not analyzed yet.</p></div>
+      <div class="summary-item"><h4>Components in use</h4><div id="componentChips" class="chips"><span class="chip neutral">Awaiting analysis</span></div></div>
+      <div class="summary-item"><h4>Key trigger / data</h4><p id="triggerText">Not analyzed yet.</p></div>
+     </div>
+     <div id="confidenceText" class="confidence">Summary will be based on extracted text and keyword evidence, not an SAP runtime validation.</div>
+    </section>
    </div>
-   <svg id="flowchart" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
-  </div>
+
+   <section class="panel flow-panel">
+    <div class="panel-heading"><span class="step">04</span><h3>Rule visualization</h3></div>
+    <div class="flow-toolbar">
+     <p>Clean process view of the conditions and actions identified in the rule text.</p>
+     <div class="actions" style="margin:0">
+      <button class="secondary" onclick="exportPNG()">Export PNG</button>
+      <button class="secondary" onclick="exportPDF()">Export PDF</button>
+      <button class="secondary" onclick="exportExcel()">Export Excel</button>
+     </div>
+    </div>
+    <div class="flow-wrap">
+     <div id="emptyState" class="empty"><div><div style="font-size:34px;margin-bottom:10px">◇</div><strong>No rule visualization yet</strong><p>Paste a screenshot, click Compute, then Analyze rule.</p></div></div>
+     <svg id="flowchart" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+   </section>
+  </section>
  </div>
-
- <div id="evidenceView" style="display:none">
-  <div id="evidenceFull" class="evidence">No source evidence yet.</div>
- </div>
-
- <div class="actions">
-  <button class="secondary" onclick="exportPNG()">Export PNG</button>
-  <button class="secondary" onclick="exportPDF()">Export PDF</button>
-  <button class="secondary" onclick="exportExcel()">Export Excel</button>
- </div>
-</section>
-
-<section class="panel">
- <h3>05. Analysis summary</h3>
- <div id="analysisSummary" class="status">No analysis generated yet.</div>
-</section>
-</section>
-</div>
-
-<div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.4</div>
+ <div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.5</div>
 </main>
 
 <script>
-let pastedScreenshot=null,screenshotURL=null,extractedText="",spreadsheetRows=[],parsedNodes=[];
+let pastedScreenshot=null,screenshotURL=null,extractedText="",parsedSteps=[],analysisData=null,spreadsheetRows=[];
 const $=id=>document.getElementById(id);
+function status(id,msg,type=""){const e=$(id);e.textContent=msg;e.className="status "+type;}
+function updateEvidence(t){extractedText=t||"";$("evidence").textContent=extractedText||"No text extracted.";}
+function updateCounts(){$("fileCount").textContent=(pastedScreenshot?1:0)+$("excelFile").files.length+$("xmlFile").files.length;}
+$("excelFile").addEventListener("change",updateCounts);$("xmlFile").addEventListener("change",updateCounts);
 
-function setStatus(id,message,type=""){
- const e=$(id);
- e.textContent=message;
- e.className="status "+type;
-}
-
-function updateEvidence(text){
- extractedText=text||"";
- $("evidence").textContent=extractedText||"No text extracted.";
- $("evidenceFull").textContent=extractedText||"No source evidence yet.";
-}
-
-function updateFileCount(){
- $("fileCount").textContent=(pastedScreenshot?1:0)+$("excelFile").files.length+$("xmlFile").files.length;
-}
-
-$("excelFile").addEventListener("change",updateFileCount);
-$("xmlFile").addEventListener("change",updateFileCount);
-
-const pasteZone=$("screenshotPasteZone");
-const preview=$("screenshotPreview");
-const placeholder=$("pastePlaceholder");
-
+const zone=$("screenshotPasteZone"),preview=$("screenshotPreview"),placeholder=$("pastePlaceholder");
 function setScreenshot(file){
- if(!file||!file.type.startsWith("image/")){
-  setStatus("uploadStatus","Please paste a valid image.","error");
-  return;
- }
+ if(!file||!file.type.startsWith("image/")){status("uploadStatus","Please paste a valid image.","error");return;}
  if(screenshotURL)URL.revokeObjectURL(screenshotURL);
- pastedScreenshot=file;
- screenshotURL=URL.createObjectURL(file);
- preview.src=screenshotURL;
- preview.style.display="block";
- placeholder.style.display="none";
- $("computeButton").disabled=false;
- updateFileCount();
- setStatus("uploadStatus","Screenshot pasted successfully. Click Compute & Transfer to Rule Logic.","success");
+ pastedScreenshot=file;screenshotURL=URL.createObjectURL(file);
+ preview.src=screenshotURL;preview.style.display="block";placeholder.style.display="none";
+ $("computeButton").disabled=false;updateCounts();
+ status("uploadStatus","Screenshot pasted. Click Compute & Transfer to Rule Logic.","success");
 }
-
-pasteZone.addEventListener("click",()=>pasteZone.focus());
-pasteZone.addEventListener("paste",handleImagePaste);
-
-document.addEventListener("paste",event=>{
- const t=event.target;
- if(t&&(t.isContentEditable||["INPUT","TEXTAREA"].includes(t.tagName)))return;
- handleImagePaste(event);
+zone.addEventListener("click",()=>zone.focus());
+zone.addEventListener("paste",handlePaste);
+document.addEventListener("paste",e=>{
+ const t=e.target;if(t&&(t.isContentEditable||["INPUT","TEXTAREA"].includes(t.tagName)))return;
+ handlePaste(e);
 });
-
-function handleImagePaste(event){
- const items=event.clipboardData?.items||[];
- for(const item of items){
-  if(item.type.startsWith("image/")){
-   event.preventDefault();
-   setScreenshot(item.getAsFile());
-   return;
-  }
- }
+function handlePaste(e){
+ const items=e.clipboardData?.items||[];
+ for(const item of items){if(item.type.startsWith("image/")){e.preventDefault();setScreenshot(item.getAsFile());return;}}
 }
-
-pasteZone.addEventListener("dragover",e=>{
- e.preventDefault();
- pasteZone.classList.add("dragover");
-});
-
-pasteZone.addEventListener("dragleave",()=>pasteZone.classList.remove("dragover"));
-
-pasteZone.addEventListener("drop",e=>{
- e.preventDefault();
- pasteZone.classList.remove("dragover");
- const f=[...e.dataTransfer.files].find(x=>x.type.startsWith("image/"));
- if(f)setScreenshot(f);
-});
-
+zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover");});
+zone.addEventListener("dragleave",()=>zone.classList.remove("dragover"));
+zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("dragover");const f=[...e.dataTransfer.files].find(x=>x.type.startsWith("image/"));if(f)setScreenshot(f);});
 function clearScreenshot(){
- pastedScreenshot=null;
- if(screenshotURL){
-  URL.revokeObjectURL(screenshotURL);
-  screenshotURL=null;
- }
- preview.removeAttribute("src");
- preview.style.display="none";
- placeholder.style.display="block";
- $("computeButton").disabled=true;
- updateFileCount();
- setStatus("uploadStatus","Screenshot removed. Paste another screenshot to continue.");
+ pastedScreenshot=null;if(screenshotURL){URL.revokeObjectURL(screenshotURL);screenshotURL=null;}
+ preview.removeAttribute("src");preview.style.display="none";placeholder.style.display="block";
+ $("computeButton").disabled=true;updateCounts();status("uploadStatus","Screenshot removed.");
 }
-
-/* Compute performs OCR and transfers the result into Block 03 automatically. */
 async function computeAndTransfer(){
- if(!pastedScreenshot){
-  setStatus("uploadStatus","Paste a screenshot first.","error");
-  return;
- }
- if(!window.Tesseract){
-  setStatus("uploadStatus","OCR library did not load. Check your internet connection and refresh.","error");
-  return;
- }
-
- const button=$("computeButton");
- button.disabled=true;
- button.textContent="Computing...";
- setStatus("uploadStatus","Reading screenshot with OCR...");
-
+ if(!pastedScreenshot){status("uploadStatus","Paste a screenshot first.","error");return;}
+ if(!window.Tesseract){status("uploadStatus","OCR library did not load. Check internet access and refresh.","error");return;}
+ const b=$("computeButton");b.disabled=true;b.textContent="Computing OCR...";
+ status("uploadStatus","Reading screenshot...");
  try{
-  const result=await Tesseract.recognize(pastedScreenshot,"eng",{
-   logger:m=>{
-    if(m.status==="recognizing text"){
-     setStatus("uploadStatus","Computing screenshot: "+Math.round(m.progress*100)+"%");
-    }
-   }
-  });
-
+  const result=await Tesseract.recognize(pastedScreenshot,"eng",{logger:m=>{if(m.status==="recognizing text")status("uploadStatus","OCR progress: "+Math.round(m.progress*100)+"%");}});
   const text=(result.data.text||"").trim();
-
-  if(!text){
-   setStatus("uploadStatus","No readable text was detected. Try a clearer screenshot.","error");
-   return;
-  }
-
-  updateEvidence(text);
-  $("logicInput").value=text;
-
-  setStatus("logicStatus","OCR text transferred automatically. Review the extracted rule, then generate the flowchart.","success");
-  setStatus("uploadStatus","Compute complete. Extracted text has been sent to Section 03.","success");
-
+  if(!text){status("uploadStatus","No readable text detected. Try a higher-resolution screenshot.","error");return;}
+  updateEvidence(text);$("logicInput").value=text;
+  status("uploadStatus","OCR complete. Extracted text transferred to Block 02. Now click Analyze rule.","success");
+  status("logicStatus","Text transferred. OCR can contain errors; review the conditions and actions before analysis.","success");
   $("logicInput").scrollIntoView({behavior:"smooth",block:"center"});
-
- }catch(e){
-  setStatus("uploadStatus","OCR failed: "+e.message,"error");
- }finally{
-  button.disabled=!pastedScreenshot;
-  button.textContent="Compute & Transfer to Rule Logic";
- }
+ }catch(e){status("uploadStatus","OCR failed: "+e.message,"error");}
+ finally{b.disabled=!pastedScreenshot;b.textContent="Compute & Transfer to Rule Logic";}
 }
-
 function useEvidenceAsLogic(){
- if(!extractedText.trim()){
-  setStatus("uploadStatus","No extracted text available. Compute a screenshot or import a file first.","error");
-  return;
- }
- $("logicInput").value=extractedText;
- setStatus("logicStatus","Extracted text transferred. Review it before generating the flowchart.","success");
- $("logicInput").scrollIntoView({behavior:"smooth",block:"center"});
+ if(!extractedText){status("uploadStatus","No evidence to transfer.","error");return;}
+ $("logicInput").value=extractedText;status("logicStatus","Evidence transferred. Review it and click Analyze rule.","success");
 }
-
 async function readSpreadsheet(){
- const f=$("excelFile").files[0];
-
- if(!f){
-  setStatus("uploadStatus","Select an Excel or CSV file first.","error");
-  return;
- }
-
- if(!window.XLSX){
-  setStatus("uploadStatus","Spreadsheet library did not load.","error");
-  return;
- }
-
+ const f=$("excelFile").files[0];if(!f){status("uploadStatus","Choose an Excel or CSV file first.","error");return;}
+ if(!window.XLSX){status("uploadStatus","Spreadsheet library did not load.","error");return;}
  try{
-  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
-  const sheet=wb.Sheets[wb.SheetNames[0]];
-
+  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),sheet=wb.Sheets[wb.SheetNames[0]];
   spreadsheetRows=XLSX.utils.sheet_to_json(sheet,{defval:""});
-  updateEvidence(XLSX.utils.sheet_to_csv(sheet));
-
-  if(spreadsheetRows.length){
-   $("ruleCount").textContent=spreadsheetRows.length;
-   const first=spreadsheetRows[0];
-   const key=Object.keys(first).find(k=>/rule.?name|name/i.test(k));
-   if(key&&first[key])$("ruleName").value=first[key];
-  }
-
-  setStatus("uploadStatus","Imported "+spreadsheetRows.length+" rows. Use Send extracted text to Rule Logic to transfer the data.","success");
-
- }catch(e){
-  setStatus("uploadStatus","Spreadsheet import failed: "+e.message,"error");
- }
+  const csv=XLSX.utils.sheet_to_csv(sheet);updateEvidence(csv);$("logicInput").value=csv;
+  if(spreadsheetRows.length){$("ruleCount").textContent=spreadsheetRows.length;const row=spreadsheetRows[0],k=Object.keys(row).find(x=>/rule.?name|name/i.test(x));if(k&&row[k])$("ruleName").value=row[k];}
+  status("uploadStatus","Imported "+spreadsheetRows.length+" spreadsheet rows and transferred their text to Block 02.","success");
+ }catch(e){status("uploadStatus","Spreadsheet import failed: "+e.message,"error");}
 }
-
 async function readXML(){
- const f=$("xmlFile").files[0];
-
- if(!f){
-  setStatus("uploadStatus","Select an XML file first.","error");
-  return;
- }
-
+ const f=$("xmlFile").files[0];if(!f){status("uploadStatus","Choose an XML file first.","error");return;}
  try{
-  const doc=new DOMParser().parseFromString(await f.text(),"application/xml");
-
-  if(doc.querySelector("parsererror"))throw Error("Invalid XML structure.");
-
-  const lines=[];
-
-  function walk(n,d=0){
-   if(n.nodeType!==1)return;
-
-   const a=[...n.attributes].map(x=>x.name+"="+x.value).join(" ");
-   const v=[...n.childNodes]
-    .filter(x=>x.nodeType===3)
-    .map(x=>x.nodeValue.trim())
-    .filter(Boolean)
-    .join(" ");
-
-   lines.push("  ".repeat(Math.min(d,8))+"<"+n.tagName+(a?" "+a:"")+">"+(v?" "+v:""));
-
-   [...n.children].forEach(c=>walk(c,d+1));
-  }
-
-  walk(doc.documentElement);
-  updateEvidence(lines.join("\n"));
-
-  setStatus("uploadStatus","XML loaded. Use Send extracted text to Rule Logic to transfer the data. SAP-specific semantics are not yet interpreted.","success");
-
- }catch(e){
-  setStatus("uploadStatus","XML import failed: "+e.message,"error");
- }
+  const doc=new DOMParser().parseFromString(await f.text(),"application/xml");if(doc.querySelector("parsererror"))throw Error("Invalid XML.");
+  const lines=[];function walk(n,d=0){if(n.nodeType!==1)return;const a=[...n.attributes].map(x=>x.name+"="+x.value).join(" ");const v=[...n.childNodes].filter(x=>x.nodeType===3).map(x=>x.nodeValue.trim()).filter(Boolean).join(" ");lines.push("  ".repeat(Math.min(d,8))+"<"+n.tagName+(a?" "+a:"")+">"+(v?" "+v:""));[...n.children].forEach(c=>walk(c,d+1));}
+  walk(doc.documentElement);const txt=lines.join("\n");updateEvidence(txt);$("logicInput").value=txt;
+  status("uploadStatus","XML loaded and transferred to Block 02. SAP rule semantics still require validation.","success");
+ }catch(e){status("uploadStatus","XML import failed: "+e.message,"error");}
 }
 
-/* Basic parser: recognizes simple IF/ELSE text and a Then block.
-   It does not fully parse nested SuccessFactors conditions or AND/OR precedence. */
-function parseLogic(source){
- const lines=source.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- const thenIndex=lines.findIndex(x=>/^then\b/i.test(x));
-
- if(thenIndex>=0){
-  const condition=lines.slice(0,thenIndex).join(" ").trim();
-  const action=lines.slice(thenIndex+1).join(" ").trim();
-
-  if(!condition&&!action)return[];
-
-  return [
-   {type:"condition",label:condition||"Condition not identified",action:""},
-   {type:"action",label:"THEN - Action",action:action||"No action text identified"}
-  ];
- }
-
- const nodes=[];
- let current=null;
-
- for(const line of lines){
-  if(/^ELSE\s+IF\s+/i.test(line)){
-   current={type:"condition",label:line.replace(/^ELSE\s+IF\s+/i,"").trim(),action:""};
-   nodes.push(current);
-  }else if(/^IF\s+/i.test(line)){
-   current={type:"condition",label:line.replace(/^IF\s+/i,"").trim(),action:""};
-   nodes.push(current);
-  }else if(/^ELSE\b/i.test(line)){
-   current={type:"else",label:"Otherwise",action:""};
-   nodes.push(current);
-  }else if(/^(THEN|SET|DO)\b/i.test(line)){
-   if(!current){
-    current={type:"action",label:"Action",action:""};
-    nodes.push(current);
-   }
-   current.action+=(current.action?" ":"")+line.replace(/^(THEN|SET|DO)\s*/i,"");
-  }else if(current){
-   current.action+=(current.action?" ":"")+line;
-  }else{
-   current={type:"condition",label:line,action:""};
-   nodes.push(current);
-  }
- }
-
- return nodes;
+/* Conservative text analysis. It extracts visible statements and keyword signals;
+   it does not claim to reconstruct SAP's full nested rule execution tree. */
+function cleanLine(s){return s.replace(/[|•]/g," ").replace(/\s+/g," ").trim();}
+function splitRuleText(text){
+ return text.split(/\r?\n/).map(cleanLine).filter(x=>x.length>2);
 }
-
-function loadExample(){
- $("logicInput").value=
- "IF employee status is Active\n"+
- "THEN set employee group to Permanent\n"+
- "ELSE IF employee status is Inactive\n"+
- "THEN set employee group to Former Employee\n"+
- "ELSE\n"+
- "THEN set employee group to Pending";
+function detectComponents(text){
+ const t=text.toLowerCase(),out=[];
+ const groups=[
+  ["Time Off / Leave",/\bleave\b|\btime off\b|\babsence\b|\bvacation\b|\bsick\b/],
+  ["Time Management",/\btime\b|\btimesheet\b|\bclock\b|\bovertime\b|\bworking time\b|\btime type\b/],
+  ["Attendance",/\battendance\b|\bpunch\b|\bcheck.?in\b|\bcheck.?out\b|\bbiometric\b/],
+  ["Employee Central",/\bemployeecentral\b|\bemployee\b|\bjob information\b|\bemployment\b|\buser\b|\bposition\b/],
+  ["Workflow",/\bworkflow\b|\bapproval\b|\bapprover\b|\broute map\b/],
+  ["Payroll",/\bpayroll\b|\bpay component\b|\bwage type\b|\bpay group\b/],
+  ["Recruiting",/\brequisition\b|\bcandidate\b|\bjob application\b|\boffer\b/],
+  ["Onboarding",/\bonboarding\b|\bnew hire\b|\bnew employee\b/],
+  ["Compensation",/\bcompensation\b|\bsalary\b|\bmerit\b|\bbonus\b/],
+  ["Learning",/\blearning\b|\bcourse\b|\btraining\b|\blms\b/],
+  ["Performance & Goals",/\bperformance\b|\bgoal\b|\bcompetenc\b|\bobjective\b/],
+  ["MDF / Custom Objects",/\bmdf\b|\bcustom object\b|\bcust_|\bobject definition\b/]
+ ];
+ groups.forEach(([name,re])=>{if(re.test(t))out.push(name);});
+ return out.length?out:["Not confidently identified"];
 }
-
-function clearLogic(){
- $("logicInput").value="";
- $("flowchart").style.display="none";
- $("emptyState").style.display="grid";
- parsedNodes=[];
- $("nodeCount").textContent="0";
- $("analysisSummary").textContent="No analysis generated yet.";
-}
-
-function drawFlowchart(nodes){
- const svg=$("flowchart");
- const w=760,bw=500,bh=88,g=38,x=(w-bw)/2,y0=30;
- const h=y0+(nodes.length+2)*(bh+g)+20;
-
- svg.setAttribute("viewBox",`0 0 ${w} ${h}`);
- svg.setAttribute("height",h);
- svg.innerHTML="";
-
- function add(tag,a){
-  const e=document.createElementNS("http://www.w3.org/2000/svg",tag);
-  Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));
-  svg.appendChild(e);
-  return e;
- }
-
- function txt(x,y,s,c="node-text"){
-  const e=add("text",{x,y,class:c,"text-anchor":"middle"});
-  e.textContent=s;
- }
-
- function wrap(s,max=62){
-  const words=String(s).split(/\s+/),out=[];
-  let line="";
-
-  words.forEach(word=>{
-   if((line+" "+word).trim().length>max&&line){
-    out.push(line);
-    line=word;
-   }else{
-    line=(line+" "+word).trim();
-   }
-  });
-
-  if(line)out.push(line);
-  return out.slice(0,4);
- }
-
- add("rect",{x:x+140,y:y0,width:220,height:42,rx:20,fill:"#e8efff",stroke:"#4169e1","stroke-width":2});
- txt(w/2,y0+26,"START","node-title");
-
- let prev=y0+42;
-
- nodes.forEach((n,i)=>{
-  const y=y0+42+g+i*(bh+g);
-
-  add("line",{x1:w/2,y1:prev,x2:w/2,y2:y,stroke:"#8c9bb5","stroke-width":2});
-
-  const fill=n.type==="else"?"#fff4e5":n.type==="action"?"#e8f7ed":"#eef2ff";
-  const stroke=n.type==="else"?"#e3a03d":n.type==="action"?"#3b9a62":"#7289dc";
-
-  if(n.type==="condition"){
-   const pts=[
-    `${w/2},${y}`,
-    `${w/2+bw/2},${y+bh/2}`,
-    `${w/2},${y+bh}`,
-    `${w/2-bw/2},${y+bh/2}`
-   ].join(" ");
-
-   add("polygon",{points:pts,fill,stroke,"stroke-width":2});
-  }else{
-   add("rect",{x,y,width:bw,height:bh,rx:10,fill,stroke,"stroke-width":2});
-  }
-
-  txt(w/2,y+22,n.type==="else"?"ELSE BRANCH":n.type==="condition"?"CONDITION "+(i+1):"ACTION","node-title");
-
-  wrap(n.type==="condition"?n.label:(n.action||n.label))
-   .forEach((s,j)=>txt(w/2,y+43+j*14,s));
-
-  prev=y+bh;
+function extractActions(lines){
+ const found=[];
+ const patterns=[/raise message/i,/set\s+.+?\s+to\s+/i,/create\s+.+/i,/update\s+.+/i,/delete\s+.+/i,/trigger\s+.+/i,/return\s+.+/i,/send\s+.+/i,/assign\s+.+/i];
+ lines.forEach(line=>{
+  if(/^(then|else|if|else if)\b/i.test(line))return;
+  if(patterns.some(r=>r.test(line))||/raise message/i.test(line))found.push(line);
  });
-
- const end=prev+g;
-
- add("line",{x1:w/2,y1:prev,x2:w/2,y2:end,stroke:"#8c9bb5","stroke-width":2});
- add("rect",{x:x+140,y:end,width:220,height:42,rx:20,fill:"#e5f7ec",stroke:"#3b9a62","stroke-width":2});
- txt(w/2,end+26,"END","node-title");
-
- $("emptyState").style.display="none";
- svg.style.display="block";
+ return [...new Set(found)].slice(0,12);
 }
-
-function generateFlow(){
- const s=$("logicInput").value.trim();
-
- if(!s){
-  setStatus("logicStatus","Enter or transfer rule logic first.","error");
-  return;
+function buildAnalysis(text){
+ const lines=splitRuleText(text),lower=text.toLowerCase();
+ const thenAt=lines.findIndex(x=>/^then\b/i.test(x));
+ let conditionLines=[],actionLines=[];
+ if(thenAt>=0){conditionLines=lines.slice(0,thenAt).filter(x=>!/^if\b/i.test(x)||x.length>3);actionLines=extractActions(lines.slice(thenAt+1));}
+ else{
+  conditionLines=lines.filter(x=>/\b(if|equal to|before|after|greater than|less than|is not|is equal|contains|starts with)\b/i.test(x));
+  actionLines=extractActions(lines);
  }
-
- parsedNodes=parseLogic(s);
-
- if(!parsedNodes.length){
-  setStatus("logicStatus","No recognizable logic found.","error");
-  return;
+ conditionLines=conditionLines.filter(x=>!/^then\b/i.test(x)).slice(0,10);
+ const components=detectComponents(text);
+ const actions=actionLines.length?actionLines:["No clear action statement was reliably extracted"];
+ const triggers=conditionLines.length?conditionLines.slice(0,4):["No explicit condition was confidently extracted"];
+ const hasMessage=/raise message/i.test(text);
+ const messageMatch=lines.find(x=>/raise message/i.test(x));
+ let purpose="The rule appears to apply a business validation or automation based on the conditions visible in the extracted text.";
+ if(hasMessage)purpose="The rule appears to validate an employee or transaction condition and display an error or warning message when the condition is met.";
+ if(/\b120\b/.test(text)&&/sick|leave|time off/i.test(text))purpose="The rule appears to enforce a limit or eligibility validation related to sick leave / time off, with a 120-day period mentioned in the extracted text.";
+ if(/\b180\b/.test(text)&&/leave|backdat/i.test(text))purpose="The rule appears to restrict backdated leave requests using a 180-day threshold.";
+ let does=messageMatch?messageMatch:actions.join(" | ");
+ if(does.length>260)does=does.slice(0,257)+"...";
+ const confidence=(conditionLines.length&&actionLines.length&&components[0]!=="Not confidently identified")?"Moderate (OCR-derived evidence)":"Low to moderate (OCR text is incomplete or ambiguous)";
+ return {lines,conditions:conditionLines,actions,triggers,components,purpose,does,confidence,hasMessage};
+}
+function analyzeRule(){
+ const text=$("logicInput").value.trim();
+ if(!text){status("logicStatus","Paste or transfer rule text before analysis.","error");return;}
+ analysisData=buildAnalysis(text);
+ $("purposeText").textContent=analysisData.purpose;
+ $("doesText").textContent=analysisData.does;
+ $("triggerText").textContent=analysisData.triggers.slice(0,3).join(" • ");
+ $("componentChips").innerHTML="";
+ analysisData.components.forEach(c=>{const s=document.createElement("span");s.className="chip"+(c==="Not confidently identified"?" neutral":"");s.textContent=c;$("componentChips").appendChild(s);});
+ $("ruleSummary").textContent="RRuleLens has prepared a preliminary explanation from the visible rule text. Confirm the interpretation against the original SuccessFactors rule configuration.";
+ $("confidenceText").textContent="Interpretation confidence: "+analysisData.confidence+". This is evidence-based classification, not AI reasoning or tenant validation.";
+ parsedSteps=makeSteps(analysisData);
+ drawFlow(parsedSteps);
+ $("ruleCount").textContent="1";$("nodeCount").textContent=parsedSteps.length+2;
+ status("logicStatus","Analysis complete. Review the purpose, components and each flowchart step against the original rule.","success");
+}
+function makeSteps(a){
+ const steps=[];
+ if(a.conditions.length){
+  a.conditions.forEach((c,i)=>steps.push({type:"condition",title:"Condition "+(i+1),detail:c}));
+ }else{
+  steps.push({type:"note",title:"Condition not identified",detail:"No reliable condition was extracted from the supplied text."});
  }
-
- drawFlowchart(parsedNodes);
-
- $("nodeCount").textContent=parsedNodes.length+2;
- $("ruleCount").textContent="1";
-
- const c=parsedNodes.filter(n=>n.type==="condition").length;
- const a=parsedNodes.filter(n=>n.type==="action"||n.action).length;
- const m=parsedNodes.filter(n=>!n.action&&n.type!=="condition").length;
-
- $("analysisSummary").textContent=
- "Rule: "+$("ruleName").value+
- "\nConditions identified: "+c+
- "\nActions identified: "+a+
- "\nBranches without recognized actions: "+m+
- "\n\nImportant: preliminary text-based interpretation only. It does not validate nested conditions, AND/OR precedence, SuccessFactors function arguments or exact execution semantics.";
-
- setStatus("logicStatus","Flowchart generated. Validate every condition and action against the source rule.","success");
+ a.actions.forEach((x,i)=>steps.push({type:"action",title:"Action "+(i+1),detail:x}));
+ if(!a.actions.length)steps.push({type:"note",title:"Action not identified",detail:"Review the THEN section in the source rule."});
+ return steps.slice(0,12);
 }
-
-function showTab(tab,b){
- $("flowView").style.display=tab==="flow"?"block":"none";
- $("evidenceView").style.display=tab==="evidenceView"?"block":"none";
- document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
- b.classList.add("active");
+function drawFlow(steps){
+ const svg=$("flowchart"),W=900,boxW=650,boxH=76,gap=28,left=(W-boxW)/2,top=25;
+ const H=top+55+steps.length*(boxH+gap)+70;
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("height",H);svg.innerHTML="";
+ const NS="http://www.w3.org/2000/svg";
+ function el(tag,attrs,parent=svg){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));parent.appendChild(n);return n;}
+ function text(x,y,str,size=14,weight=500,color="#263754",anchor="middle"){
+  const t=el("text",{x,y,"font-size":size,"font-weight":weight,fill:color,"text-anchor":anchor});
+  t.textContent=str;return t;
+ }
+ function wrap(str,max=78){
+  const words=String(str).split(/\s+/),out=[];let line="";
+  words.forEach(w=>{if((line+" "+w).trim().length>max&&line){out.push(line);line=w;}else line=(line+" "+w).trim();});
+  if(line)out.push(line);return out.slice(0,2);
+ }
+ // Start pill
+ el("rect",{x:W/2-105,y:top,width:210,height:44,rx:22,fill:"#eaf0ff",stroke:"#5577ec","stroke-width":2});
+ text(W/2,top+28,"RULE START",13,750,"#304d9d");
+ let prevY=top+44;
+ steps.forEach((s,i)=>{
+  const y=top+70+i*(boxH+gap),cx=W/2;
+  // Smooth curved connector
+  el("path",{d:`M ${cx} ${prevY} C ${cx} ${prevY+16}, ${cx} ${y-16}, ${cx} ${y}`,fill:"none",stroke:"#aab7ce","stroke-width":2.4,"stroke-linecap":"round"});
+  let fill=s.type==="condition"?"#eef3ff":s.type==="action"?"#eaf8f0":"#fff7e9";
+  let stroke=s.type==="condition"?"#718be5":s.type==="action"?"#45a36d":"#d4a24f";
+  el("rect",{x:left,y,width:boxW,height:boxH,rx:15,fill,stroke,"stroke-width":1.8});
+  el("rect",{x:left+14,y:y+13,width:7,height:boxH-26,rx:4,fill:stroke,stroke:"none"});
+  text(left+38,y+26,s.title.toUpperCase(),10,800,stroke,"start");
+  const lines=wrap(s.detail);
+  lines.forEach((ln,j)=>text(W/2,y+49+j*16,ln,12,550,"#27364f"));
+  prevY=y+boxH;
+ });
+ const endY=prevY+gap;
+ el("path",{d:`M ${W/2} ${prevY} C ${W/2} ${prevY+12}, ${W/2} ${endY-12}, ${W/2} ${endY}`,fill:"none",stroke:"#aab7ce","stroke-width":2.4,"stroke-linecap":"round"});
+ el("rect",{x:W/2-105,y:endY,width:210,height:44,rx:22,fill:"#e8f7ed",stroke:"#45a36d","stroke-width":2});
+ text(W/2,endY+28,"RULE END",13,750,"#267747");
+ $("emptyState").style.display="none";svg.style.display="block";
 }
-
+function loadExample(){
+ $("ruleName").value="Sick Leave Duration Validation";
+ $("logicInput").value="Employee Time Type is equal to Sick Leave\nEmployee Time Start Date is before Date Plus(Base Date: Today(), Number of Days: -120)\nThen\nRaise Message: Maximum 120 days of sick leave can be taken within period.";
+ status("logicStatus","Example loaded. Click Analyze rule.","success");
+}
+function clearLogic(){
+ $("logicInput").value="";analysisData=null;parsedSteps=[];
+ $("flowchart").style.display="none";$("emptyState").style.display="grid";
+ $("nodeCount").textContent="0";$("ruleCount").textContent="0";
+ $("purposeText").textContent="Not analyzed yet.";$("doesText").textContent="Not analyzed yet.";
+ $("triggerText").textContent="Not analyzed yet."; $("componentChips").innerHTML='<span class="chip neutral">Awaiting analysis</span>';
+ $("ruleSummary").textContent="Analyze a rule to generate its purpose and impact summary.";
+}
 function exportPNG(){
- if(!parsedNodes.length){
-  alert("Generate a flowchart first.");
-  return;
- }
-
- const svg=$("flowchart");
- const copy=svg.cloneNode(true);
- copy.setAttribute("xmlns","http://www.w3.org/2000/svg");
-
- const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml;charset=utf-8"});
- const url=URL.createObjectURL(blob);
- const img=new Image();
-
- img.onload=()=>{
-  const c=document.createElement("canvas");
-  c.width=1520;
-  c.height=Number(svg.getAttribute("height"))*2;
-
-  const ctx=c.getContext("2d");
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,c.width,c.height);
-  ctx.drawImage(img,0,0,c.width,c.height);
-
-  const a=document.createElement("a");
-  a.download="RRuleLens_Flowchart.png";
-  a.href=c.toDataURL("image/png");
-  a.click();
-
-  URL.revokeObjectURL(url);
- };
-
- img.onerror=()=>{
-  URL.revokeObjectURL(url);
-  alert("PNG export failed.");
- };
-
- img.src=url;
+ if(!parsedSteps.length){alert("Analyze a rule first.");return;}
+ const source=$("flowchart"),copy=source.cloneNode(true);copy.setAttribute("xmlns","http://www.w3.org/2000/svg");
+ const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml;charset=utf-8"}),url=URL.createObjectURL(blob),img=new Image();
+ img.onload=()=>{const c=document.createElement("canvas");c.width=1800;c.height=Number(source.getAttribute("height"))*2;const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);const a=document.createElement("a");a.download="RRuleLens_Rule_Flow.png";a.href=c.toDataURL("image/png");a.click();URL.revokeObjectURL(url);};
+ img.onerror=()=>{URL.revokeObjectURL(url);alert("PNG export failed.");};img.src=url;
 }
-
 function exportPDF(){
- if(!parsedNodes.length){
-  alert("Generate a flowchart first.");
-  return;
- }
-
- const win=window.open("","_blank");
-
- if(!win){
-  alert("Allow pop-ups to export PDF.");
-  return;
- }
-
- win.document.write("<!DOCTYPE html><html><head><title>RRuleLens Report</title><style>body{font-family:Arial;padding:30px;color:#1d2940}svg{width:100%;height:auto}button{padding:10px;margin-top:20px}@media print{button{display:none}}</style></head><body></body></html>");
- win.document.close();
-
- const d=win.document;
- const h=d.createElement("h1");
- h.textContent="RRuleLens - Business Rule Flowchart";
- d.body.appendChild(h);
-
- const p=d.createElement("p");
- p.textContent="Rule: "+$("ruleName").value;
- d.body.appendChild(p);
-
- const desc=d.createElement("p");
- desc.textContent="Description: "+$("ruleDescription").value;
- d.body.appendChild(desc);
-
- const holder=d.createElement("div");
- holder.innerHTML=$("flowchart").outerHTML;
- d.body.appendChild(holder);
-
- const note=d.createElement("p");
- note.textContent="Preliminary text-based interpretation. Validate against original SAP configuration.";
- d.body.appendChild(note);
-
- const btn=d.createElement("button");
- btn.textContent="Print / Save as PDF";
- btn.onclick=()=>win.print();
- d.body.appendChild(btn);
+ if(!parsedSteps.length){alert("Analyze a rule first.");return;}
+ const w=window.open("","_blank");if(!w){alert("Allow pop-ups to export PDF.");return;}
+ w.document.write("<!doctype html><html><head><title>RRuleLens Rule Analysis</title><style>body{font-family:Arial;padding:28px;color:#1d2940}svg{width:100%;height:auto}button{padding:10px 15px}@media print{button{display:none}}</style></head><body></body></html>");w.document.close();
+ const d=w.document;const h=d.createElement("h1");h.textContent="RRuleLens - Rule Analysis";d.body.appendChild(h);
+ [ "Rule: "+$("ruleName").value,"Purpose: "+$("purposeText").textContent,"What it does: "+$("doesText").textContent,"Components: "+analysisData.components.join(", ") ].forEach(t=>{const p=d.createElement("p");p.textContent=t;d.body.appendChild(p);});
+ const holder=d.createElement("div");holder.innerHTML=$("flowchart").outerHTML;d.body.appendChild(holder);
+ const b=d.createElement("button");b.textContent="Print / Save as PDF";b.onclick=()=>w.print();d.body.appendChild(b);
 }
-
 function exportExcel(){
- if(!parsedNodes.length){
-  alert("Generate a flowchart first.");
-  return;
- }
-
- if(!window.XLSX){
-  alert("Excel library unavailable.");
-  return;
- }
-
- const rows=parsedNodes.map((n,i)=>({
-  "Sequence":i+1,
-  "Type":n.type,
-  "Condition / Branch":n.label,
-  "Action":n.action
- }));
-
+ if(!parsedSteps.length){alert("Analyze a rule first.");return;}if(!window.XLSX){alert("Excel library unavailable.");return;}
  const wb=XLSX.utils.book_new();
-
- XLSX.utils.book_append_sheet(
-  wb,
-  XLSX.utils.json_to_sheet(rows),
-  "Rule Analysis"
- );
-
- const summary=XLSX.utils.aoa_to_sheet([
-  ["RRuleLens Rule Analysis"],
-  ["Rule Name",$("ruleName").value],
-  ["Description",$("ruleDescription").value],
-  ["Conditions",parsedNodes.filter(n=>n.type==="condition").length],
-  ["Generated",new Date().toLocaleString()],
-  ["Note","Preliminary text parsing. Validate against original SAP configuration."]
- ]);
-
- XLSX.utils.book_append_sheet(wb,summary,"Summary");
+ const summary=[
+ ["RRuleLens Rule Analysis"],["Rule name",$("ruleName").value],["Business purpose",analysisData.purpose],
+ ["What the rule does",analysisData.does],["Impacted components",analysisData.components.join(", ")],
+ ["Interpretation confidence",analysisData.confidence],["Review note","OCR-derived interpretation. Validate against original SuccessFactors configuration."]
+ ];
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),"Purpose Summary");
+ const rows=parsedSteps.map((s,i)=>({Sequence:i+1,Type:s.type,Step:s.title,ExtractedText:s.detail}));
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Rule Steps");
  XLSX.writeFile(wb,"RRuleLens_Rule_Analysis.xlsx");
 }
 </script>
