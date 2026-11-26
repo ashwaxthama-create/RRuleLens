@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RRuleLens | SuccessFactors Rule Analyzer</title>
+<title>RRuleLens | SAP SuccessFactors Rule Analyzer</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
 <style>
@@ -65,575 +65,659 @@ button:disabled{opacity:.5;cursor:wait}
 </style>
 </head>
 <body>
-
 <header>
-<div class="brand">
-<div class="logo"><span class="brand-r">R</span></div>
-<div>
-<h1><span class="brand-r">R</span><span class="brand-r">R</span>uleLens</h1>
-<p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p>
-</div>
-</div>
-<div class="version">PROTOTYPE V0.3</div>
+ <div class="brand">
+  <div class="logo"><span class="brand-r">R</span></div>
+  <div>
+   <h1><span class="brand-r">R</span><span class="brand-r">R</span>uleLens</h1>
+   <p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p>
+  </div>
+ </div>
+ <div class="version">PROTOTYPE V0.4</div>
 </header>
 
 <main class="container">
 <section class="hero">
-<h2>Understand your SuccessFactors Business Rules.</h2>
-<p>Paste a rule screenshot, upload Excel inventories or XML exports. Extract evidence, review rule logic and generate visual decision flows.</p>
+ <h2>Understand your SuccessFactors Business Rules.</h2>
+ <p>Paste a rule screenshot, upload Excel inventories or XML exports. Extract evidence, review rule logic and generate visual decision flows.</p>
 </section>
 
 <section class="stats">
-<div class="stat"><span>Files processed</span><strong id="fileCount">0</strong></div>
-<div class="stat"><span>Rules identified</span><strong id="ruleCount">0</strong></div>
-<div class="stat"><span>Flowchart nodes</span><strong id="nodeCount">0</strong></div>
+ <div class="stat"><span>Files processed</span><strong id="fileCount">0</strong></div>
+ <div class="stat"><span>Rules identified</span><strong id="ruleCount">0</strong></div>
+ <div class="stat"><span>Flowchart nodes</span><strong id="nodeCount">0</strong></div>
 </section>
 
 <div class="layout">
 <aside>
-
 <section class="panel">
-<h3>01. Screenshot and file input</h3>
-<label>Paste business rule screenshot</label>
+ <h3>01. Screenshot and file input</h3>
+ <label>Paste business rule screenshot</label>
 
-<div id="screenshotPasteZone" class="paste-zone" tabindex="0">
-<div id="pastePlaceholder">
-<div style="font-size:35px">📋</div>
-<strong>Paste your screenshot here</strong>
-<p>Click this area and press Ctrl + V</p>
-<span>Or drag and drop an image</span>
-</div>
-<img id="screenshotPreview" style="display:none" alt="Pasted rule screenshot">
-</div>
+ <div id="screenshotPasteZone" class="paste-zone" tabindex="0">
+  <div id="pastePlaceholder">
+   <div style="font-size:35px">📋</div>
+   <strong>Paste your screenshot here</strong>
+   <p>Click this area and press Ctrl + V</p>
+   <span>Or drag and drop an image</span>
+  </div>
+  <img id="screenshotPreview" style="display:none" alt="Pasted rule screenshot">
+ </div>
 
-<button class="full purple" id="ocrButton" onclick="readScreenshot()">Extract screenshot text</button>
-<button class="full secondary" onclick="clearScreenshot()">Remove screenshot</button>
+ <button class="full purple" id="computeButton" onclick="computeAndTransfer()" disabled>Compute &amp; Transfer to Rule Logic</button>
+ <button class="full secondary" onclick="clearScreenshot()">Remove screenshot</button>
 
-<label>Excel / CSV inventory</label>
-<input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
-<button class="full" onclick="readSpreadsheet()">Import spreadsheet</button>
+ <label>Excel / CSV inventory</label>
+ <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+ <button class="full" onclick="readSpreadsheet()">Import spreadsheet</button>
 
-<label>XML rule export</label>
-<input type="file" id="xmlFile" accept=".xml">
-<button class="full dark" onclick="readXML()">Read XML</button>
+ <label>XML rule export</label>
+ <input type="file" id="xmlFile" accept=".xml">
+ <button class="full dark" onclick="readXML()">Read XML</button>
 
-<div id="uploadStatus" class="status">Waiting for input.</div>
-<p class="small">Files are processed in your browser. OCR and spreadsheet libraries load from external CDNs. No external AI or SAP connection is used.</p>
+ <div id="uploadStatus" class="status">Paste a screenshot to enable Compute &amp; Transfer.</div>
+ <p class="small">OCR and spreadsheet libraries load from external CDNs. Processing occurs in your browser. No external AI or SAP connection is used.</p>
 </section>
 
 <section class="panel">
-<h3>02. Rule information</h3>
-<label>Rule name</label>
-<input type="text" id="ruleName" value="Sample Business Rule" placeholder="Enter rule name">
-<label>Rule description</label>
-<input type="text" id="ruleDescription" placeholder="What does this rule do?">
-<label>Extracted source evidence</label>
-<div id="evidence" class="evidence">Pasted screenshot or imported file content will appear here.</div>
-<button class="full" onclick="useEvidenceAsLogic()">Send extracted text to Rule Logic</button>
+ <h3>02. Rule information</h3>
+ <label>Rule name</label>
+ <input type="text" id="ruleName" value="Sample Business Rule" placeholder="Enter rule name">
+ <label>Rule description</label>
+ <input type="text" id="ruleDescription" placeholder="What does this rule do?">
+ <label>Extracted source evidence</label>
+ <div id="evidence" class="evidence">Pasted screenshot or imported file content will appear here.</div>
+ <button class="full secondary" onclick="useEvidenceAsLogic()">Send extracted text to Rule Logic</button>
 </section>
 </aside>
 
 <section class="workspace">
 <section class="panel">
-<h3>03. Review and define rule logic</h3>
-<p class="help">Extracted text is transferred here for review. Check the conditions, operators and actions before generating a flowchart.</p>
-
-<textarea id="logicInput" placeholder="Paste or transfer extracted rule text here...">IF employee status is Active
-THEN set employee group to Permanent
-ELSE IF employee status is Inactive
-THEN set employee group to Former Employee
-ELSE
-THEN set employee group to Pending</textarea>
-
-<div class="actions">
-<button onclick="generateFlow()">Generate flowchart</button>
-<button class="secondary" onclick="loadExample()">Load example</button>
-<button class="secondary" onclick="clearLogic()">Clear</button>
-</div>
-<div id="logicStatus" class="status">Ready to generate a flowchart.</div>
+ <h3>03. Review and define rule logic</h3>
+ <p class="help">The Compute button transfers OCR text into this block automatically. Review the extracted conditions and actions before generating the flowchart.</p>
+ <textarea id="logicInput" placeholder="Paste a screenshot and click Compute & Transfer to Rule Logic..."></textarea>
+ <div class="actions">
+  <button onclick="generateFlow()">Generate flowchart</button>
+  <button class="secondary" onclick="loadExample()">Load example</button>
+  <button class="secondary" onclick="clearLogic()">Clear</button>
+ </div>
+ <div id="logicStatus" class="status">Waiting for rule logic.</div>
 </section>
 
 <section class="panel">
-<h3>04. Rule visualization</h3>
-<div class="tabs">
-<button class="tab active" onclick="showTab('flow',this)">Flowchart</button>
-<button class="tab" onclick="showTab('evidenceView',this)">Source evidence</button>
-</div>
+ <h3>04. Rule visualization</h3>
+ <div class="tabs">
+  <button class="tab active" onclick="showTab('flow',this)">Flowchart</button>
+  <button class="tab" onclick="showTab('evidenceView',this)">Source evidence</button>
+ </div>
 
-<div id="flowView">
-<div class="flow-wrap">
-<div id="emptyState" class="empty">
-<div>
-<div style="font-size:35px;margin-bottom:12px">◇</div>
-<strong>No flowchart generated</strong>
-<p>Transfer or enter rule logic and click Generate flowchart.</p>
-</div>
-</div>
-<svg id="flowchart" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
-</div>
-</div>
+ <div id="flowView">
+  <div class="flow-wrap">
+   <div id="emptyState" class="empty">
+    <div>
+     <div style="font-size:35px;margin-bottom:12px">◇</div>
+     <strong>No flowchart generated</strong>
+     <p>Compute the screenshot, review the logic and click Generate flowchart.</p>
+    </div>
+   </div>
+   <svg id="flowchart" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+ </div>
 
-<div id="evidenceView" style="display:none">
-<div id="evidenceFull" class="evidence">No source evidence yet.</div>
-</div>
+ <div id="evidenceView" style="display:none">
+  <div id="evidenceFull" class="evidence">No source evidence yet.</div>
+ </div>
 
-<div class="actions">
-<button class="secondary" onclick="exportPNG()">Export PNG</button>
-<button class="secondary" onclick="exportPDF()">Export PDF</button>
-<button class="secondary" onclick="exportExcel()">Export Excel</button>
-</div>
+ <div class="actions">
+  <button class="secondary" onclick="exportPNG()">Export PNG</button>
+  <button class="secondary" onclick="exportPDF()">Export PDF</button>
+  <button class="secondary" onclick="exportExcel()">Export Excel</button>
+ </div>
 </section>
 
 <section class="panel">
-<h3>05. Analysis summary</h3>
-<div id="analysisSummary" class="status">No analysis generated yet.</div>
+ <h3>05. Analysis summary</h3>
+ <div id="analysisSummary" class="status">No analysis generated yet.</div>
 </section>
 </section>
 </div>
 
-<div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.3</div>
+<div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.4</div>
 </main>
 
 <script>
-let pastedScreenshot=null;
-let screenshotURL=null;
-let extractedText="";
-let spreadsheetRows=[];
-let parsedNodes=[];
+let pastedScreenshot=null,screenshotURL=null,extractedText="",spreadsheetRows=[],parsedNodes=[];
+const $=id=>document.getElementById(id);
 
 function setStatus(id,message,type=""){
-const e=document.getElementById(id);
-e.textContent=message;
-e.className="status "+type;
+ const e=$(id);
+ e.textContent=message;
+ e.className="status "+type;
 }
 
 function updateEvidence(text){
-extractedText=text||"";
-document.getElementById("evidence").textContent=extractedText||"No text extracted.";
-document.getElementById("evidenceFull").textContent=extractedText||"No source evidence yet.";
+ extractedText=text||"";
+ $("evidence").textContent=extractedText||"No text extracted.";
+ $("evidenceFull").textContent=extractedText||"No source evidence yet.";
 }
 
 function updateFileCount(){
-document.getElementById("fileCount").textContent=
-(pastedScreenshot?1:0)+
-document.getElementById("excelFile").files.length+
-document.getElementById("xmlFile").files.length;
+ $("fileCount").textContent=(pastedScreenshot?1:0)+$("excelFile").files.length+$("xmlFile").files.length;
 }
 
-document.getElementById("excelFile").addEventListener("change",updateFileCount);
-document.getElementById("xmlFile").addEventListener("change",updateFileCount);
+$("excelFile").addEventListener("change",updateFileCount);
+$("xmlFile").addEventListener("change",updateFileCount);
 
-const pasteZone=document.getElementById("screenshotPasteZone");
-const screenshotPreview=document.getElementById("screenshotPreview");
-const pastePlaceholder=document.getElementById("pastePlaceholder");
+const pasteZone=$("screenshotPasteZone");
+const preview=$("screenshotPreview");
+const placeholder=$("pastePlaceholder");
 
 function setScreenshot(file){
-if(!file||!file.type.startsWith("image/")){
-setStatus("uploadStatus","Please paste a valid image.","error");
-return;
-}
-if(screenshotURL)URL.revokeObjectURL(screenshotURL);
-pastedScreenshot=file;
-screenshotURL=URL.createObjectURL(file);
-screenshotPreview.src=screenshotURL;
-screenshotPreview.style.display="block";
-pastePlaceholder.style.display="none";
-updateFileCount();
-setStatus("uploadStatus","Screenshot pasted successfully. Ready for OCR.","success");
+ if(!file||!file.type.startsWith("image/")){
+  setStatus("uploadStatus","Please paste a valid image.","error");
+  return;
+ }
+ if(screenshotURL)URL.revokeObjectURL(screenshotURL);
+ pastedScreenshot=file;
+ screenshotURL=URL.createObjectURL(file);
+ preview.src=screenshotURL;
+ preview.style.display="block";
+ placeholder.style.display="none";
+ $("computeButton").disabled=false;
+ updateFileCount();
+ setStatus("uploadStatus","Screenshot pasted successfully. Click Compute & Transfer to Rule Logic.","success");
 }
 
 pasteZone.addEventListener("click",()=>pasteZone.focus());
 pasteZone.addEventListener("paste",handleImagePaste);
 
 document.addEventListener("paste",event=>{
-const t=event.target;
-if(t&&(t.isContentEditable||["INPUT","TEXTAREA"].includes(t.tagName)))return;
-handleImagePaste(event);
+ const t=event.target;
+ if(t&&(t.isContentEditable||["INPUT","TEXTAREA"].includes(t.tagName)))return;
+ handleImagePaste(event);
 });
 
 function handleImagePaste(event){
-const items=event.clipboardData?.items||[];
-for(const item of items){
-if(item.type.startsWith("image/")){
-event.preventDefault();
-setScreenshot(item.getAsFile());
-return;
-}
-}
+ const items=event.clipboardData?.items||[];
+ for(const item of items){
+  if(item.type.startsWith("image/")){
+   event.preventDefault();
+   setScreenshot(item.getAsFile());
+   return;
+  }
+ }
 }
 
 pasteZone.addEventListener("dragover",e=>{
-e.preventDefault();
-pasteZone.classList.add("dragover");
+ e.preventDefault();
+ pasteZone.classList.add("dragover");
 });
+
 pasteZone.addEventListener("dragleave",()=>pasteZone.classList.remove("dragover"));
+
 pasteZone.addEventListener("drop",e=>{
-e.preventDefault();
-pasteZone.classList.remove("dragover");
-const f=[...e.dataTransfer.files].find(x=>x.type.startsWith("image/"));
-if(f)setScreenshot(f);
+ e.preventDefault();
+ pasteZone.classList.remove("dragover");
+ const f=[...e.dataTransfer.files].find(x=>x.type.startsWith("image/"));
+ if(f)setScreenshot(f);
 });
 
 function clearScreenshot(){
-pastedScreenshot=null;
-if(screenshotURL){URL.revokeObjectURL(screenshotURL);screenshotURL=null;}
-screenshotPreview.removeAttribute("src");
-screenshotPreview.style.display="none";
-pastePlaceholder.style.display="block";
-updateFileCount();
-setStatus("uploadStatus","Screenshot removed.");
+ pastedScreenshot=null;
+ if(screenshotURL){
+  URL.revokeObjectURL(screenshotURL);
+  screenshotURL=null;
+ }
+ preview.removeAttribute("src");
+ preview.style.display="none";
+ placeholder.style.display="block";
+ $("computeButton").disabled=true;
+ updateFileCount();
+ setStatus("uploadStatus","Screenshot removed. Paste another screenshot to continue.");
 }
 
-async function readScreenshot(){
-if(!pastedScreenshot){
-setStatus("uploadStatus","Paste a screenshot first.","error");
-return;
-}
-if(!window.Tesseract){
-setStatus("uploadStatus","OCR library did not load. Check your internet connection.","error");
-return;
-}
-const b=document.getElementById("ocrButton");
-b.disabled=true;
-setStatus("uploadStatus","Reading screenshot. Please wait...");
-try{
-const r=await Tesseract.recognize(pastedScreenshot,"eng",{
-logger:m=>{
-if(m.status==="recognizing text"){
-setStatus("uploadStatus","Extracting text: "+Math.round(m.progress*100)+"%");
-}
-}
-});
-updateEvidence(r.data.text);
-setStatus("uploadStatus","Screenshot text extracted. Click 'Send extracted text to Rule Logic' to transfer it.","success");
-}catch(e){
-setStatus("uploadStatus","OCR failed: "+e.message,"error");
-}finally{
-b.disabled=false;
-}
+/* Compute performs OCR and transfers the result into Block 03 automatically. */
+async function computeAndTransfer(){
+ if(!pastedScreenshot){
+  setStatus("uploadStatus","Paste a screenshot first.","error");
+  return;
+ }
+ if(!window.Tesseract){
+  setStatus("uploadStatus","OCR library did not load. Check your internet connection and refresh.","error");
+  return;
+ }
+
+ const button=$("computeButton");
+ button.disabled=true;
+ button.textContent="Computing...";
+ setStatus("uploadStatus","Reading screenshot with OCR...");
+
+ try{
+  const result=await Tesseract.recognize(pastedScreenshot,"eng",{
+   logger:m=>{
+    if(m.status==="recognizing text"){
+     setStatus("uploadStatus","Computing screenshot: "+Math.round(m.progress*100)+"%");
+    }
+   }
+  });
+
+  const text=(result.data.text||"").trim();
+
+  if(!text){
+   setStatus("uploadStatus","No readable text was detected. Try a clearer screenshot.","error");
+   return;
+  }
+
+  updateEvidence(text);
+  $("logicInput").value=text;
+
+  setStatus("logicStatus","OCR text transferred automatically. Review the extracted rule, then generate the flowchart.","success");
+  setStatus("uploadStatus","Compute complete. Extracted text has been sent to Section 03.","success");
+
+  $("logicInput").scrollIntoView({behavior:"smooth",block:"center"});
+
+ }catch(e){
+  setStatus("uploadStatus","OCR failed: "+e.message,"error");
+ }finally{
+  button.disabled=!pastedScreenshot;
+  button.textContent="Compute & Transfer to Rule Logic";
+ }
 }
 
 function useEvidenceAsLogic(){
-if(!extractedText.trim()){
-setStatus("uploadStatus","No extracted text available. Run OCR or import a file first.","error");
-return;
-}
-document.getElementById("logicInput").value=extractedText;
-setStatus("logicStatus","Extracted text transferred. Review the content before generating the flowchart.","success");
-document.getElementById("logicInput").scrollIntoView({behavior:"smooth",block:"center"});
+ if(!extractedText.trim()){
+  setStatus("uploadStatus","No extracted text available. Compute a screenshot or import a file first.","error");
+  return;
+ }
+ $("logicInput").value=extractedText;
+ setStatus("logicStatus","Extracted text transferred. Review it before generating the flowchart.","success");
+ $("logicInput").scrollIntoView({behavior:"smooth",block:"center"});
 }
 
 async function readSpreadsheet(){
-const f=document.getElementById("excelFile").files[0];
-if(!f){
-setStatus("uploadStatus","Select an Excel or CSV file first.","error");
-return;
-}
-if(!window.XLSX){
-setStatus("uploadStatus","Spreadsheet library did not load.","error");
-return;
-}
-try{
-const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
-const sheet=wb.Sheets[wb.SheetNames[0]];
-spreadsheetRows=XLSX.utils.sheet_to_json(sheet,{defval:""});
-updateEvidence(XLSX.utils.sheet_to_csv(sheet));
-if(spreadsheetRows.length){
-document.getElementById("ruleCount").textContent=spreadsheetRows.length;
-const first=spreadsheetRows[0];
-const key=Object.keys(first).find(k=>/rule.?name|name/i.test(k));
-if(key&&first[key])document.getElementById("ruleName").value=first[key];
-}
-setStatus("uploadStatus","Imported "+spreadsheetRows.length+" rows. Click 'Send extracted text to Rule Logic' to transfer the content.","success");
-}catch(e){
-setStatus("uploadStatus","Spreadsheet import failed: "+e.message,"error");
-}
+ const f=$("excelFile").files[0];
+
+ if(!f){
+  setStatus("uploadStatus","Select an Excel or CSV file first.","error");
+  return;
+ }
+
+ if(!window.XLSX){
+  setStatus("uploadStatus","Spreadsheet library did not load.","error");
+  return;
+ }
+
+ try{
+  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+
+  spreadsheetRows=XLSX.utils.sheet_to_json(sheet,{defval:""});
+  updateEvidence(XLSX.utils.sheet_to_csv(sheet));
+
+  if(spreadsheetRows.length){
+   $("ruleCount").textContent=spreadsheetRows.length;
+   const first=spreadsheetRows[0];
+   const key=Object.keys(first).find(k=>/rule.?name|name/i.test(k));
+   if(key&&first[key])$("ruleName").value=first[key];
+  }
+
+  setStatus("uploadStatus","Imported "+spreadsheetRows.length+" rows. Use Send extracted text to Rule Logic to transfer the data.","success");
+
+ }catch(e){
+  setStatus("uploadStatus","Spreadsheet import failed: "+e.message,"error");
+ }
 }
 
 async function readXML(){
-const f=document.getElementById("xmlFile").files[0];
-if(!f){
-setStatus("uploadStatus","Select an XML file first.","error");
-return;
-}
-try{
-const doc=new DOMParser().parseFromString(await f.text(),"application/xml");
-if(doc.querySelector("parsererror"))throw Error("Invalid XML structure.");
-const lines=[];
-function walk(n,d=0){
-if(n.nodeType!==1)return;
-const a=[...n.attributes].map(x=>x.name+"="+x.value).join(" ");
-const v=[...n.childNodes].filter(x=>x.nodeType===3).map(x=>x.nodeValue.trim()).filter(Boolean).join(" ");
-lines.push("  ".repeat(Math.min(d,8))+"<"+n.tagName+(a?" "+a:"")+">"+(v?" "+v:""));
-[...n.children].forEach(c=>walk(c,d+1));
-}
-walk(doc.documentElement);
-updateEvidence(lines.join("\n"));
-setStatus("uploadStatus","XML loaded. Click 'Send extracted text to Rule Logic' to transfer it. SAP-specific semantics are not yet interpreted.","success");
-}catch(e){
-setStatus("uploadStatus","XML import failed: "+e.message,"error");
-}
+ const f=$("xmlFile").files[0];
+
+ if(!f){
+  setStatus("uploadStatus","Select an XML file first.","error");
+  return;
+ }
+
+ try{
+  const doc=new DOMParser().parseFromString(await f.text(),"application/xml");
+
+  if(doc.querySelector("parsererror"))throw Error("Invalid XML structure.");
+
+  const lines=[];
+
+  function walk(n,d=0){
+   if(n.nodeType!==1)return;
+
+   const a=[...n.attributes].map(x=>x.name+"="+x.value).join(" ");
+   const v=[...n.childNodes]
+    .filter(x=>x.nodeType===3)
+    .map(x=>x.nodeValue.trim())
+    .filter(Boolean)
+    .join(" ");
+
+   lines.push("  ".repeat(Math.min(d,8))+"<"+n.tagName+(a?" "+a:"")+">"+(v?" "+v:""));
+
+   [...n.children].forEach(c=>walk(c,d+1));
+  }
+
+  walk(doc.documentElement);
+  updateEvidence(lines.join("\n"));
+
+  setStatus("uploadStatus","XML loaded. Use Send extracted text to Rule Logic to transfer the data. SAP-specific semantics are not yet interpreted.","success");
+
+ }catch(e){
+  setStatus("uploadStatus","XML import failed: "+e.message,"error");
+ }
 }
 
-/* Rule parser */
+/* Basic parser: recognizes simple IF/ELSE text and a Then block.
+   It does not fully parse nested SuccessFactors conditions or AND/OR precedence. */
 function parseLogic(source){
-const lines=source.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-const thenIndex=lines.findIndex(x=>/^then\b/i.test(x));
+ const lines=source.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const thenIndex=lines.findIndex(x=>/^then\b/i.test(x));
 
-if(thenIndex>=0){
-const condition=lines.slice(0,thenIndex).join(" ").trim();
-const action=lines.slice(thenIndex+1).join(" ").trim();
-if(!condition&&!action)return[];
-return [{
-type:"condition",
-label:condition||"Condition not identified",
-action:action||"No action text identified"
-}];
-}
+ if(thenIndex>=0){
+  const condition=lines.slice(0,thenIndex).join(" ").trim();
+  const action=lines.slice(thenIndex+1).join(" ").trim();
 
-const nodes=[];
-let current=null;
+  if(!condition&&!action)return[];
 
-for(const line of lines){
-if(/^IF\s+/i.test(line)){
-current={type:"condition",label:line.replace(/^IF\s+/i,"").trim(),action:""};
-nodes.push(current);
-}else if(/^ELSE\s+IF\s+/i.test(line)){
-current={type:"condition",label:line.replace(/^ELSE\s+IF\s+/i,"").trim(),action:""};
-nodes.push(current);
-}else if(/^ELSE\b/i.test(line)){
-current={type:"else",label:"Otherwise",action:""};
-nodes.push(current);
-}else if(/^(THEN|SET|DO)\b/i.test(line)){
-if(!current){current={type:"action",label:"Action",action:""};nodes.push(current);}
-current.action+=(current.action?" ":"")+line.replace(/^(THEN|SET|DO)\s*/i,"");
-}else if(current){
-current.action+=(current.action?" ":"")+line;
-}else{
-current={type:"condition",label:line,action:""};
-nodes.push(current);
-}
-}
-return nodes;
+  return [
+   {type:"condition",label:condition||"Condition not identified",action:""},
+   {type:"action",label:"THEN - Action",action:action||"No action text identified"}
+  ];
+ }
+
+ const nodes=[];
+ let current=null;
+
+ for(const line of lines){
+  if(/^ELSE\s+IF\s+/i.test(line)){
+   current={type:"condition",label:line.replace(/^ELSE\s+IF\s+/i,"").trim(),action:""};
+   nodes.push(current);
+  }else if(/^IF\s+/i.test(line)){
+   current={type:"condition",label:line.replace(/^IF\s+/i,"").trim(),action:""};
+   nodes.push(current);
+  }else if(/^ELSE\b/i.test(line)){
+   current={type:"else",label:"Otherwise",action:""};
+   nodes.push(current);
+  }else if(/^(THEN|SET|DO)\b/i.test(line)){
+   if(!current){
+    current={type:"action",label:"Action",action:""};
+    nodes.push(current);
+   }
+   current.action+=(current.action?" ":"")+line.replace(/^(THEN|SET|DO)\s*/i,"");
+  }else if(current){
+   current.action+=(current.action?" ":"")+line;
+  }else{
+   current={type:"condition",label:line,action:""};
+   nodes.push(current);
+  }
+ }
+
+ return nodes;
 }
 
 function loadExample(){
-document.getElementById("logicInput").value=
-"IF employee status is Active\n"+
-"THEN set employee group to Permanent\n"+
-"ELSE IF employee status is Inactive\n"+
-"THEN set employee group to Former Employee\n"+
-"ELSE\n"+
-"THEN set employee group to Pending";
+ $("logicInput").value=
+ "IF employee status is Active\n"+
+ "THEN set employee group to Permanent\n"+
+ "ELSE IF employee status is Inactive\n"+
+ "THEN set employee group to Former Employee\n"+
+ "ELSE\n"+
+ "THEN set employee group to Pending";
 }
 
 function clearLogic(){
-document.getElementById("logicInput").value="";
-document.getElementById("flowchart").style.display="none";
-document.getElementById("emptyState").style.display="grid";
-parsedNodes=[];
-document.getElementById("nodeCount").textContent="0";
-document.getElementById("analysisSummary").textContent="No analysis generated yet.";
+ $("logicInput").value="";
+ $("flowchart").style.display="none";
+ $("emptyState").style.display="grid";
+ parsedNodes=[];
+ $("nodeCount").textContent="0";
+ $("analysisSummary").textContent="No analysis generated yet.";
 }
 
 function drawFlowchart(nodes){
-const svg=document.getElementById("flowchart");
-const w=760,bw=500,bh=88,g=38,x=(w-bw)/2,y0=30;
-const h=y0+(nodes.length+2)*(bh+g)+20;
-svg.setAttribute("viewBox",`0 0 ${w} ${h}`);
-svg.setAttribute("height",h);
-svg.innerHTML="";
+ const svg=$("flowchart");
+ const w=760,bw=500,bh=88,g=38,x=(w-bw)/2,y0=30;
+ const h=y0+(nodes.length+2)*(bh+g)+20;
 
-function add(tag,a){
-const e=document.createElementNS("http://www.w3.org/2000/svg",tag);
-Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));
-svg.appendChild(e);
-return e;
-}
+ svg.setAttribute("viewBox",`0 0 ${w} ${h}`);
+ svg.setAttribute("height",h);
+ svg.innerHTML="";
 
-function txt(x,y,s,c="node-text"){
-const e=add("text",{x,y,class:c,"text-anchor":"middle"});
-e.textContent=s;
-}
+ function add(tag,a){
+  const e=document.createElementNS("http://www.w3.org/2000/svg",tag);
+  Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));
+  svg.appendChild(e);
+  return e;
+ }
 
-function wrap(s,max=62){
-const words=String(s).split(/\s+/),out=[];
-let line="";
-words.forEach(word=>{
-if((line+" "+word).trim().length>max&&line){
-out.push(line);
-line=word;
-}else{
-line=(line+" "+word).trim();
-}
-});
-if(line)out.push(line);
-return out.slice(0,4);
-}
+ function txt(x,y,s,c="node-text"){
+  const e=add("text",{x,y,class:c,"text-anchor":"middle"});
+  e.textContent=s;
+ }
 
-add("rect",{x:x+140,y:y0,width:220,height:42,rx:20,fill:"#e8efff",stroke:"#4169e1","stroke-width":2});
-txt(w/2,y0+26,"START","node-title");
+ function wrap(s,max=62){
+  const words=String(s).split(/\s+/),out=[];
+  let line="";
 
-let prev=y0+42;
+  words.forEach(word=>{
+   if((line+" "+word).trim().length>max&&line){
+    out.push(line);
+    line=word;
+   }else{
+    line=(line+" "+word).trim();
+   }
+  });
 
-nodes.forEach((n,i)=>{
-const y=y0+42+g+i*(bh+g);
-add("line",{x1:w/2,y1:prev,x2:w/2,y2:y,stroke:"#8c9bb5","stroke-width":2});
-const fill=n.type==="else"?"#fff4e5":"#eef2ff";
-const stroke=n.type==="else"?"#e3a03d":"#7289dc";
+  if(line)out.push(line);
+  return out.slice(0,4);
+ }
 
-if(n.type==="condition"){
-const pts=[
-`${w/2},${y}`,
-`${w/2+bw/2},${y+bh/2}`,
-`${w/2},${y+bh}`,
-`${w/2-bw/2},${y+bh/2}`
-].join(" ");
-add("polygon",{points:pts,fill,stroke,"stroke-width":2});
-}else{
-add("rect",{x,y,width:bw,height:bh,rx:10,fill,stroke,"stroke-width":2});
-}
+ add("rect",{x:x+140,y:y0,width:220,height:42,rx:20,fill:"#e8efff",stroke:"#4169e1","stroke-width":2});
+ txt(w/2,y0+26,"START","node-title");
 
-txt(w/2,y+22,n.type==="else"?"ELSE BRANCH":n.type==="condition"?"CONDITION "+(i+1):"ACTION","node-title");
-wrap(n.type==="condition"?n.label:(n.action||n.label)).forEach((s,j)=>txt(w/2,y+43+j*14,s));
-prev=y+bh;
-});
+ let prev=y0+42;
 
-const end=prev+g;
-add("line",{x1:w/2,y1:prev,x2:w/2,y2:end,stroke:"#8c9bb5","stroke-width":2});
-add("rect",{x:x+140,y:end,width:220,height:42,rx:20,fill:"#e5f7ec",stroke:"#3b9a62","stroke-width":2});
-txt(w/2,end+26,"END","node-title");
+ nodes.forEach((n,i)=>{
+  const y=y0+42+g+i*(bh+g);
 
-document.getElementById("emptyState").style.display="none";
-svg.style.display="block";
+  add("line",{x1:w/2,y1:prev,x2:w/2,y2:y,stroke:"#8c9bb5","stroke-width":2});
+
+  const fill=n.type==="else"?"#fff4e5":n.type==="action"?"#e8f7ed":"#eef2ff";
+  const stroke=n.type==="else"?"#e3a03d":n.type==="action"?"#3b9a62":"#7289dc";
+
+  if(n.type==="condition"){
+   const pts=[
+    `${w/2},${y}`,
+    `${w/2+bw/2},${y+bh/2}`,
+    `${w/2},${y+bh}`,
+    `${w/2-bw/2},${y+bh/2}`
+   ].join(" ");
+
+   add("polygon",{points:pts,fill,stroke,"stroke-width":2});
+  }else{
+   add("rect",{x,y,width:bw,height:bh,rx:10,fill,stroke,"stroke-width":2});
+  }
+
+  txt(w/2,y+22,n.type==="else"?"ELSE BRANCH":n.type==="condition"?"CONDITION "+(i+1):"ACTION","node-title");
+
+  wrap(n.type==="condition"?n.label:(n.action||n.label))
+   .forEach((s,j)=>txt(w/2,y+43+j*14,s));
+
+  prev=y+bh;
+ });
+
+ const end=prev+g;
+
+ add("line",{x1:w/2,y1:prev,x2:w/2,y2:end,stroke:"#8c9bb5","stroke-width":2});
+ add("rect",{x:x+140,y:end,width:220,height:42,rx:20,fill:"#e5f7ec",stroke:"#3b9a62","stroke-width":2});
+ txt(w/2,end+26,"END","node-title");
+
+ $("emptyState").style.display="none";
+ svg.style.display="block";
 }
 
 function generateFlow(){
-const s=document.getElementById("logicInput").value.trim();
-if(!s){
-setStatus("logicStatus","Enter or transfer rule logic first.","error");
-return;
-}
-parsedNodes=parseLogic(s);
-if(!parsedNodes.length){
-setStatus("logicStatus","No recognizable logic found.","error");
-return;
-}
-drawFlowchart(parsedNodes);
-document.getElementById("nodeCount").textContent=parsedNodes.length+2;
-document.getElementById("ruleCount").textContent="1";
+ const s=$("logicInput").value.trim();
 
-const c=parsedNodes.filter(n=>n.type==="condition").length;
-const a=parsedNodes.filter(n=>n.action).length;
-const m=parsedNodes.filter(n=>!n.action).length;
+ if(!s){
+  setStatus("logicStatus","Enter or transfer rule logic first.","error");
+  return;
+ }
 
-document.getElementById("analysisSummary").textContent=
-"Rule: "+document.getElementById("ruleName").value+
-"\nConditions/branches identified: "+c+
-"\nActions identified: "+a+
-"\nBranches without recognized actions: "+m+
-"\n\nImportant: preliminary text-based interpretation only. It does not validate nested conditions, AND/OR precedence, SAP function arguments or exact execution semantics.";
+ parsedNodes=parseLogic(s);
 
-setStatus("logicStatus","Flowchart generated. Validate every condition and action against the source rule.","success");
+ if(!parsedNodes.length){
+  setStatus("logicStatus","No recognizable logic found.","error");
+  return;
+ }
+
+ drawFlowchart(parsedNodes);
+
+ $("nodeCount").textContent=parsedNodes.length+2;
+ $("ruleCount").textContent="1";
+
+ const c=parsedNodes.filter(n=>n.type==="condition").length;
+ const a=parsedNodes.filter(n=>n.type==="action"||n.action).length;
+ const m=parsedNodes.filter(n=>!n.action&&n.type!=="condition").length;
+
+ $("analysisSummary").textContent=
+ "Rule: "+$("ruleName").value+
+ "\nConditions identified: "+c+
+ "\nActions identified: "+a+
+ "\nBranches without recognized actions: "+m+
+ "\n\nImportant: preliminary text-based interpretation only. It does not validate nested conditions, AND/OR precedence, SuccessFactors function arguments or exact execution semantics.";
+
+ setStatus("logicStatus","Flowchart generated. Validate every condition and action against the source rule.","success");
 }
 
 function showTab(tab,b){
-document.getElementById("flowView").style.display=tab==="flow"?"block":"none";
-document.getElementById("evidenceView").style.display=tab==="evidenceView"?"block":"none";
-document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-b.classList.add("active");
+ $("flowView").style.display=tab==="flow"?"block":"none";
+ $("evidenceView").style.display=tab==="evidenceView"?"block":"none";
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");
 }
 
 function exportPNG(){
-if(!parsedNodes.length){alert("Generate a flowchart first.");return;}
-const svg=document.getElementById("flowchart");
-const copy=svg.cloneNode(true);
-copy.setAttribute("xmlns","http://www.w3.org/2000/svg");
-const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml;charset=utf-8"});
-const url=URL.createObjectURL(blob);
-const img=new Image();
+ if(!parsedNodes.length){
+  alert("Generate a flowchart first.");
+  return;
+ }
 
-img.onload=()=>{
-const c=document.createElement("canvas");
-c.width=1520;
-c.height=Number(svg.getAttribute("height"))*2;
-const ctx=c.getContext("2d");
-ctx.fillStyle="#fff";
-ctx.fillRect(0,0,c.width,c.height);
-ctx.drawImage(img,0,0,c.width,c.height);
-const a=document.createElement("a");
-a.download="RRuleLens_Flowchart.png";
-a.href=c.toDataURL("image/png");
-a.click();
-URL.revokeObjectURL(url);
-};
-img.onerror=()=>{
-URL.revokeObjectURL(url);
-alert("PNG export failed.");
-};
-img.src=url;
+ const svg=$("flowchart");
+ const copy=svg.cloneNode(true);
+ copy.setAttribute("xmlns","http://www.w3.org/2000/svg");
+
+ const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const img=new Image();
+
+ img.onload=()=>{
+  const c=document.createElement("canvas");
+  c.width=1520;
+  c.height=Number(svg.getAttribute("height"))*2;
+
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#fff";
+  ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(img,0,0,c.width,c.height);
+
+  const a=document.createElement("a");
+  a.download="RRuleLens_Flowchart.png";
+  a.href=c.toDataURL("image/png");
+  a.click();
+
+  URL.revokeObjectURL(url);
+ };
+
+ img.onerror=()=>{
+  URL.revokeObjectURL(url);
+  alert("PNG export failed.");
+ };
+
+ img.src=url;
 }
 
 function exportPDF(){
-if(!parsedNodes.length){alert("Generate a flowchart first.");return;}
-const win=window.open("","_blank");
-if(!win){alert("Allow pop-ups to export PDF.");return;}
+ if(!parsedNodes.length){
+  alert("Generate a flowchart first.");
+  return;
+ }
 
-win.document.write("<!DOCTYPE html><html><head><title>RRuleLens Report</title><style>body{font-family:Arial;padding:30px;color:#1d2940}svg{width:100%;height:auto}button{padding:10px;margin-top:20px}@media print{button{display:none}}</style></head><body></body></html>");
-win.document.close();
+ const win=window.open("","_blank");
 
-const d=win.document;
-const h=d.createElement("h1");
-h.textContent="RRuleLens - Business Rule Flowchart";
-d.body.appendChild(h);
+ if(!win){
+  alert("Allow pop-ups to export PDF.");
+  return;
+ }
 
-const p=d.createElement("p");
-p.textContent="Rule: "+document.getElementById("ruleName").value;
-d.body.appendChild(p);
+ win.document.write("<!DOCTYPE html><html><head><title>RRuleLens Report</title><style>body{font-family:Arial;padding:30px;color:#1d2940}svg{width:100%;height:auto}button{padding:10px;margin-top:20px}@media print{button{display:none}}</style></head><body></body></html>");
+ win.document.close();
 
-const desc=d.createElement("p");
-desc.textContent="Description: "+document.getElementById("ruleDescription").value;
-d.body.appendChild(desc);
+ const d=win.document;
+ const h=d.createElement("h1");
+ h.textContent="RRuleLens - Business Rule Flowchart";
+ d.body.appendChild(h);
 
-const holder=d.createElement("div");
-holder.innerHTML=document.getElementById("flowchart").outerHTML;
-d.body.appendChild(holder);
+ const p=d.createElement("p");
+ p.textContent="Rule: "+$("ruleName").value;
+ d.body.appendChild(p);
 
-const note=d.createElement("p");
-note.textContent="Preliminary text-based interpretation. Validate against original SAP configuration.";
-d.body.appendChild(note);
+ const desc=d.createElement("p");
+ desc.textContent="Description: "+$("ruleDescription").value;
+ d.body.appendChild(desc);
 
-const btn=d.createElement("button");
-btn.textContent="Print / Save as PDF";
-btn.onclick=()=>win.print();
-d.body.appendChild(btn);
+ const holder=d.createElement("div");
+ holder.innerHTML=$("flowchart").outerHTML;
+ d.body.appendChild(holder);
+
+ const note=d.createElement("p");
+ note.textContent="Preliminary text-based interpretation. Validate against original SAP configuration.";
+ d.body.appendChild(note);
+
+ const btn=d.createElement("button");
+ btn.textContent="Print / Save as PDF";
+ btn.onclick=()=>win.print();
+ d.body.appendChild(btn);
 }
 
 function exportExcel(){
-if(!parsedNodes.length){alert("Generate a flowchart first.");return;}
-if(!window.XLSX){alert("Excel library unavailable.");return;}
+ if(!parsedNodes.length){
+  alert("Generate a flowchart first.");
+  return;
+ }
 
-const rows=parsedNodes.map((n,i)=>({
-"Sequence":i+1,
-"Type":n.type,
-"Condition / Branch":n.label,
-"Action":n.action
-}));
+ if(!window.XLSX){
+  alert("Excel library unavailable.");
+  return;
+ }
 
-const wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Rule Analysis");
+ const rows=parsedNodes.map((n,i)=>({
+  "Sequence":i+1,
+  "Type":n.type,
+  "Condition / Branch":n.label,
+  "Action":n.action
+ }));
 
-const summary=XLSX.utils.aoa_to_sheet([
-["RRuleLens Rule Analysis"],
-["Rule Name",document.getElementById("ruleName").value],
-["Description",document.getElementById("ruleDescription").value],
-["Conditions",parsedNodes.filter(n=>n.type==="condition").length],
-["Generated",new Date().toLocaleString()],
-["Note","Preliminary text parsing. Validate against original SAP configuration."]
-]);
+ const wb=XLSX.utils.book_new();
 
-XLSX.utils.book_append_sheet(wb,summary,"Summary");
-XLSX.writeFile(wb,"RRuleLens_Rule_Analysis.xlsx");
+ XLSX.utils.book_append_sheet(
+  wb,
+  XLSX.utils.json_to_sheet(rows),
+  "Rule Analysis"
+ );
+
+ const summary=XLSX.utils.aoa_to_sheet([
+  ["RRuleLens Rule Analysis"],
+  ["Rule Name",$("ruleName").value],
+  ["Description",$("ruleDescription").value],
+  ["Conditions",parsedNodes.filter(n=>n.type==="condition").length],
+  ["Generated",new Date().toLocaleString()],
+  ["Note","Preliminary text parsing. Validate against original SAP configuration."]
+ ]);
+
+ XLSX.utils.book_append_sheet(wb,summary,"Summary");
+ XLSX.writeFile(wb,"RRuleLens_Rule_Analysis.xlsx");
 }
 </script>
 </body>
