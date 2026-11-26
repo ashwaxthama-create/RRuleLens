@@ -4,424 +4,262 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RRuleLens | SuccessFactors Business Rule Analyzer</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.5/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{
- --navy:#101c36;--navy2:#1d3158;--blue:#4169e1;--purple:#7454d6;
- --red:#ff4545;--bg:#f3f6fb;--text:#1d2940;--muted:#718096;
- --border:#dfe6f1;--green:#27965b;--amber:#c88722;--white:#fff;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
-header{background:var(--navy);color:white;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;gap:15px}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6d8cff,#9b68dc);display:grid;place-items:center;font-size:23px;font-weight:800}
-.brand h1{margin:0;font-size:22px;letter-spacing:-.5px}
-.brand-r{color:var(--red)}
-.brand p{margin:4px 0 0;font-size:10px;letter-spacing:.7px;color:#c1cde2}
-.version{border:1px solid #536483;border-radius:20px;padding:7px 13px;font-size:10px;color:#e0e8f6}
-.container{max-width:1600px;margin:auto;padding:22px}
-.hero{background:linear-gradient(110deg,#172849,#2b4176);color:white;border-radius:15px;padding:22px 25px;margin-bottom:18px}
-.hero h2{margin:0 0 7px;font-size:23px}.hero p{margin:0;color:#d4def0;font-size:13px;line-height:1.55}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px}
-.metric{background:white;border:1px solid var(--border);border-radius:12px;padding:13px 17px}
-.metric span{font-size:11px;color:var(--muted)}.metric strong{display:block;font-size:22px;margin-top:5px;color:var(--navy)}
-.main-layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
-.left-column,.right-column{min-width:0}
-.panel{background:white;border:1px solid var(--border);border-radius:13px;padding:17px;margin-bottom:16px;box-shadow:0 2px 8px rgba(20,42,80,.025)}
-.panel h3{font-size:14px;margin:0 0 13px;color:#172747}
-.panel-heading{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.step{width:25px;height:25px;border-radius:8px;background:#edf1ff;color:#3859c9;display:grid;place-items:center;font-size:11px;font-weight:800}
-label{display:block;font-size:11px;font-weight:700;margin:13px 0 6px}
-input[type=text],textarea{width:100%;border:1px solid #d7deea;border-radius:8px;padding:10px;font:inherit;font-size:12px;background:#fff;color:var(--text)}
-textarea{resize:vertical;line-height:1.5;min-height:170px}
+:root{--navy:#101c36;--navy2:#20365f;--blue:#4169e1;--purple:#7454d6;--red:#ff414b;--bg:#f3f6fb;--ink:#1d2940;--muted:#718096;--line:#dfe6f1;--green:#258b55;--amber:#a86b12}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif}
+header{background:var(--navy);color:white;padding:15px 26px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6d8cff,#9b68dc);display:grid;place-items:center;font-size:23px;font-weight:800;color:var(--red)}
+.brand h1{margin:0;font-size:22px}.rr{color:var(--red)}.brand p{margin:4px 0 0;color:#c1cde2;font-size:10px;letter-spacing:.7px}
+.version{border:1px solid #526484;padding:7px 12px;border-radius:20px;font-size:10px}
+main{max-width:1650px;margin:auto;padding:20px}.hero{background:linear-gradient(110deg,#172849,#2b4176);color:white;border-radius:15px;padding:21px 24px;margin-bottom:16px}.hero h2{margin:0 0 7px;font-size:22px}.hero p{margin:0;color:#d5def0;font-size:13px;line-height:1.5}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.metric,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}.metric{padding:12px 16px}.metric span{font-size:11px;color:var(--muted)}.metric strong{display:block;margin-top:4px;font-size:22px;color:var(--navy)}
+.layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}.panel{padding:16px;margin-bottom:15px;box-shadow:0 2px 8px #142a5008;min-width:0}
+.heading{display:flex;align-items:center;gap:9px;margin-bottom:12px}.step{width:26px;height:26px;border-radius:8px;background:#edf1ff;color:#3859c9;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}
+h3{font-size:14px;margin:0;color:#172747}label{display:block;font-size:11px;font-weight:700;margin:12px 0 6px}
+input[type=text],textarea{width:100%;border:1px solid #d7deea;border-radius:8px;padding:10px;font:inherit;font-size:12px;color:var(--ink);background:#fff}
+textarea{resize:vertical;min-height:170px;line-height:1.5}
 input[type=file]{width:100%;font-size:11px;padding:9px;border:1px dashed #b9c5d8;border-radius:8px;background:#f8faff}
-button{border:0;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px;cursor:pointer;background:var(--blue);color:white;transition:transform .12s,filter .12s}
-button:hover{filter:brightness(.96);transform:translateY(-1px)}
-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
-button.secondary{background:#edf1fa;color:#31415f}
-button.dark{background:#182849}
-button.purple{background:var(--purple)}
-button.full{width:100%;margin-top:9px}
+button{border:0;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px;cursor:pointer;background:var(--blue);color:white}
+button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:not-allowed}button.secondary{background:#edf1fa;color:#31415f}button.dark{background:#182849}button.purple{background:var(--purple)}button.full{width:100%;margin-top:8px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.status{margin-top:9px;padding:9px 10px;border-radius:8px;font-size:11px;line-height:1.45;background:#f0f4fb;color:#42516c;white-space:pre-wrap;overflow-wrap:anywhere}
-.status.success{background:#eaf8ef;color:#20643b}.status.error{background:#fff0f0;color:#a42c2c}
+.status{margin-top:9px;padding:9px 10px;border-radius:8px;background:#f0f4fb;color:#42516c;font-size:11px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}.status.ok{background:#eaf8ef;color:#20643b}.status.warn{background:#fff6e8;color:#875b17}.status.err{background:#fff0f0;color:#a42c2c}
 .small{font-size:10px;color:var(--muted);line-height:1.5}
-.paste-zone{min-height:165px;border:2px dashed #9aabc5;border-radius:11px;background:#f7f9ff;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;cursor:pointer;overflow:hidden}
-.paste-zone:hover,.paste-zone:focus,.paste-zone.dragover{border-color:var(--blue);background:#eef3ff;outline:none}
-.paste-zone strong{display:block;margin:8px 0;color:#253858;font-size:12px}
-.paste-zone p{font-size:11px;color:#536582;margin:6px 0}
-.paste-zone span{font-size:10px;color:#8995aa}
-.paste-zone img{max-width:100%;max-height:235px;border-radius:7px;object-fit:contain}
-.top-panels{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,1.25fr);gap:15px;align-items:stretch}
-.top-panels .panel{margin-bottom:15px}
-#ruleSummary{min-height:170px}
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
-.summary-item{background:#f6f8fc;border:1px solid #e8edf5;border-radius:9px;padding:10px;min-width:0}
-.summary-item h4{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#74819a;margin:0 0 6px}
-.summary-item p{font-size:11px;line-height:1.45;margin:0;overflow-wrap:anywhere}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{background:#edf1ff;color:#3d55a0;border-radius:20px;padding:5px 8px;font-size:10px;font-weight:700}
-.chip.neutral{background:#f0f2f6;color:#596579}
-.confidence{font-size:10px;color:#8a6a2c;margin-top:9px}
-.logic-panel textarea{min-height:180px}
-.flow-panel{margin-top:0}
-.flow-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.flow-toolbar p{margin:0;font-size:11px;color:var(--muted)}
-.flow-wrap{min-height:350px;overflow:auto;background:linear-gradient(180deg,#fbfcff,#f8faff);border:1px solid var(--border);border-radius:12px;padding:12px}
-#flowchart{display:block;width:100%;min-width:680px}
-.empty{min-height:320px;display:grid;place-items:center;color:#8b98ad;text-align:center;font-size:12px}
-.empty strong{color:#52627d}
-.evidence{max-height:240px;overflow:auto;background:#f6f8fc;padding:11px;border-radius:8px;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
-.footer{text-align:center;color:#8b96a8;font-size:10px;padding:20px}
-@media(max-width:1050px){.main-layout{grid-template-columns:290px minmax(0,1fr)}.top-panels{grid-template-columns:1fr}}
-@media(max-width:760px){header{padding:13px 16px}.container{padding:13px}.main-layout{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.summary-grid{grid-template-columns:1fr}}
+.paste{min-height:170px;border:2px dashed #9aabc5;border-radius:11px;background:#f7f9ff;display:grid;place-items:center;text-align:center;padding:12px;cursor:pointer;overflow:hidden}.paste:focus,.paste.drag{outline:none;border-color:var(--blue);background:#eef3ff}.paste img{max-width:100%;max-height:245px;object-fit:contain;border-radius:7px}.paste strong{display:block;margin:8px 0;font-size:12px}.paste p{font-size:11px;color:#536582;margin:5px}
+.top{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,1.12fr);gap:14px}.top .panel{margin-bottom:14px}
+.summary-lead{padding:11px;border-radius:9px;background:#f0f4fb;font-size:11px;line-height:1.5;min-height:68px}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.sum{border:1px solid #e8edf5;border-radius:9px;padding:10px;background:#fafbfe;min-width:0}.sum h4{font-size:10px;color:#74819a;letter-spacing:.5px;margin:0 0 6px;text-transform:uppercase}.sum p{font-size:11px;line-height:1.45;margin:0;overflow-wrap:anywhere}.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{font-size:10px;font-weight:700;padding:5px 8px;border-radius:20px;background:#edf1ff;color:#3d55a0}.chip.gray{background:#f0f2f6;color:#596579}
+.flow-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.flow-wrap{margin-top:12px;min-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;background:linear-gradient(#fcfdff,#f8faff)}
+#flow{display:none;width:100%;min-width:700px}.empty{min-height:250px;display:grid;place-items:center;text-align:center;color:#8b98ad;font-size:12px}
+.evidence{max-height:220px;overflow:auto;background:#f6f8fc;border-radius:8px;padding:10px;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
+.footer{text-align:center;color:#8b96a8;font-size:10px;padding:18px}
+@media(max-width:1100px){.layout{grid-template-columns:290px 1fr}.top{grid-template-columns:1fr}}
+@media(max-width:760px){header{padding:12px}.layout{grid-template-columns:1fr}main{padding:12px}.metrics{grid-template-columns:1fr 1fr}.summary-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header>
- <div class="brand">
-  <div class="logo"><span class="brand-r">R</span></div>
-  <div><h1><span class="brand-r">R</span><span class="brand-r">R</span>uleLens</h1><p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p></div>
- </div>
- <div class="version">PROTOTYPE V0.5</div>
-</header>
-
-<main class="container">
- <section class="hero">
-  <h2>Understand what your SuccessFactors rules actually do.</h2>
-  <p>Paste a rule screenshot or import a rule inventory. RRuleLens extracts source evidence, prepares a rule-purpose summary and creates a cleaner visual representation for review.</p>
+<header><div class="brand"><div class="logo">R</div><div><h1><span class="rr">RR</span>uleLens</h1><p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p></div></div><div class="version">PROTOTYPE V0.6</div></header>
+<main>
+<section class="hero"><h2>Understand what your SuccessFactors rules actually do.</h2><p>Paste a rule screenshot, improve OCR extraction, inspect recognized functions and build a structured rule explanation and decision flow.</p></section>
+<section class="metrics">
+ <div class="metric"><span>Files processed</span><strong id="fileCount">0</strong></div>
+ <div class="metric"><span>Rules analyzed</span><strong id="ruleCount">0</strong></div>
+ <div class="metric"><span>Flow elements</span><strong id="nodeCount">0</strong></div>
+</section>
+<div class="layout">
+<aside>
+ <section class="panel">
+  <div class="heading"><span class="step">01</span><h3>Screenshot and file input</h3></div>
+  <label>Paste SuccessFactors rule screenshot</label>
+  <div id="pasteZone" class="paste" tabindex="0"><div id="pasteHint"><div style="font-size:30px">📋</div><strong>Paste screenshot here</strong><p>Click this area and press Ctrl + V</p><p>Or drag and drop an image</p></div><img id="preview" alt="Pasted rule screenshot" hidden></div>
+  <button id="compute" class="full purple" disabled onclick="computeRule()">Compute, interpret and transfer</button>
+  <button class="full secondary" onclick="clearImage()">Remove screenshot</button>
+  <label>Excel / CSV inventory</label><input id="sheetFile" type="file" accept=".xlsx,.xls,.csv">
+  <button class="full" onclick="readSheet()">Import spreadsheet</button>
+  <label>XML rule export</label><input id="xmlFile" type="file" accept=".xml">
+  <button class="full dark" onclick="readXml()">Read XML</button>
+  <div id="inputStatus" class="status">Paste an image to begin. Compute will now run OCR and analysis automatically.</div>
+  <p class="small">OCR runs in this browser. No external AI service, SAP connection or server-side processing is used. OCR and interpretation can be wrong; verify against the source rule.</p>
  </section>
-
- <section class="metrics">
-  <div class="metric"><span>Files processed</span><strong id="fileCount">0</strong></div>
-  <div class="metric"><span>Rules identified</span><strong id="ruleCount">0</strong></div>
-  <div class="metric"><span>Flowchart elements</span><strong id="nodeCount">0</strong></div>
- </section>
-
- <div class="main-layout">
-  <!-- BLOCK 01: fixed in the left rail -->
-  <aside class="left-column">
-   <section class="panel">
-    <div class="panel-heading"><span class="step">01</span><h3>Screenshot and file input</h3></div>
-    <label>Paste business rule screenshot</label>
-    <div id="screenshotPasteZone" class="paste-zone" tabindex="0">
-     <div id="pastePlaceholder"><div style="font-size:30px">📋</div><strong>Paste screenshot here</strong><p>Click here, then press Ctrl + V</p><span>Or drag and drop an image</span></div>
-     <img id="screenshotPreview" style="display:none" alt="Pasted rule screenshot">
-    </div>
-    <button class="full purple" id="computeButton" onclick="computeAndTransfer()" disabled>Compute &amp; Transfer to Rule Logic</button>
-    <button class="full secondary" onclick="clearScreenshot()">Remove screenshot</button>
-    <label>Excel / CSV inventory</label>
-    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
-    <button class="full" onclick="readSpreadsheet()">Import spreadsheet</button>
-    <label>XML rule export</label>
-    <input type="file" id="xmlFile" accept=".xml">
-    <button class="full dark" onclick="readXML()">Read XML</button>
-    <div id="uploadStatus" class="status">Paste a screenshot to enable Compute.</div>
-    <p class="small">OCR and spreadsheet libraries load from public CDNs. Files are processed in this browser. No external AI service or SAP tenant connection is used.</p>
-   </section>
-
-   <section class="panel">
-    <div class="panel-heading"><span class="step">E</span><h3>Extracted source evidence</h3></div>
-    <div id="evidence" class="evidence">Pasted screenshot or imported file content will appear here.</div>
-    <button class="full secondary" onclick="useEvidenceAsLogic()">Transfer evidence to rule logic</button>
-   </section>
-  </aside>
-
-  <!-- BLOCKS 02 and 03 share the top row; visualization sits below -->
-  <section class="right-column">
-   <div class="top-panels">
-    <section class="panel">
-     <div class="panel-heading"><span class="step">02</span><h3>Rule information and logic</h3></div>
-     <label>Rule name</label>
-     <input type="text" id="ruleName" value="Untitled SuccessFactors Rule" placeholder="Enter rule name">
-     <label>Rule description (optional)</label>
-     <input type="text" id="ruleDescription" placeholder="Add business context if known">
-     <label>Extracted / editable rule logic</label>
-     <textarea id="logicInput" placeholder="Paste screenshot and click Compute, or transfer extracted evidence here. Review OCR text before analysis."></textarea>
-     <div class="actions">
-      <button onclick="generateAnalysis()">Analyze rule</button>
-      <button class="secondary" onclick="loadExample()">Load example</button>
-      <button class="secondary" onclick="clearLogic()">Clear</button>
-     </div>
-     <div id="logicStatus" class="status">Waiting for rule logic.</div>
-    </section>
-
-    <section class="panel">
-     <div class="panel-heading"><span class="step">03</span><h3>Rule purpose and impact summary</h3></div>
-     <div id="ruleSummary" class="status">Analyze a rule to generate a purpose summary, explain what it appears to do and identify likely impacted SuccessFactors components.</div>
-     <div class="summary-grid">
-      <div class="summary-item"><h4>Business purpose</h4><p id="purposeText">Not analyzed yet.</p></div>
-      <div class="summary-item"><h4>What the rule does</h4><p id="doesText">Not analyzed yet.</p></div>
-      <div class="summary-item"><h4>Components in use</h4><div id="componentChips" class="chips"><span class="chip neutral">Awaiting analysis</span></div></div>
-      <div class="summary-item"><h4>Key trigger / data</h4><p id="triggerText">Not analyzed yet.</p></div>
-     </div>
-     <div id="confidenceText" class="confidence">Summary will be based on extracted text and keyword evidence, not an SAP runtime validation.</div>
-    </section>
+ <section class="panel"><div class="heading"><span class="step">E</span><h3>Extracted source evidence</h3></div><div id="evidence" class="evidence">Source evidence will appear here.</div><p class="small">OCR output is evidence, not confirmed rule logic. Edit the extracted text if recognition is incorrect.</p></section>
+</aside>
+<section>
+ <div class="top">
+  <section class="panel">
+   <div class="heading"><span class="step">02</span><h3>Rule information and logic</h3></div>
+   <label>Rule name</label><input id="ruleName" type="text" value="Untitled SuccessFactors Rule">
+   <label>Rule description / business context (optional)</label><input id="ruleDescription" type="text" placeholder="Add known business context">
+   <label>Extracted / editable rule text</label><textarea id="logic" placeholder="Paste screenshot and click Compute, or paste rule text here."></textarea>
+   <div class="actions"><button onclick="analyzeCurrent()">Analyze rule</button><button class="secondary" onclick="loadSickExample()">Load sick-leave example</button><button class="secondary" onclick="clearLogic()">Clear</button></div>
+   <div id="logicStatus" class="status">Waiting for source evidence.</div>
+  </section>
+  <section class="panel">
+   <div class="heading"><span class="step">03</span><h3>Rule purpose and impact summary</h3></div>
+   <div id="summaryLead" class="summary-lead">After analysis, this block explains the rule's likely business purpose, behaviour and evidence confidence.</div>
+   <div class="summary-grid">
+    <div class="sum"><h4>Business purpose</h4><p id="purpose">Not analyzed.</p></div>
+    <div class="sum"><h4>What the rule does</h4><p id="behaviour">Not analyzed.</p></div>
+    <div class="sum"><h4>Components in use</h4><div id="components" class="chips"><span class="chip gray">Awaiting analysis</span></div></div>
+    <div class="sum"><h4>Key trigger / data</h4><p id="triggers">Not analyzed.</p></div>
    </div>
-
-   <section class="panel flow-panel">
-    <div class="panel-heading"><span class="step">04</span><h3>Rule visualization</h3></div>
-    <div class="flow-toolbar">
-     <p>Clean process view of the conditions and actions identified in the rule text.</p>
-     <div class="actions" style="margin:0">
-      <button class="secondary" onclick="exportPNG()">Export PNG</button>
-      <button class="secondary" onclick="exportPDF()">Export PDF</button>
-      <button class="secondary" onclick="exportExcel()">Export Excel</button>
-     </div>
-    </div>
-    <div class="flow-wrap">
-     <div id="emptyState" class="empty"><div><div style="font-size:34px;margin-bottom:10px">◇</div><strong>No rule visualization yet</strong><p>Paste a screenshot, click Compute, then Analyze rule.</p></div></div>
-     <svg id="flowchart" style="display:none" xmlns="http://www.w3.org/2000/svg"></svg>
-    </div>
-   </section>
+   <div id="confidence" class="small" style="margin-top:9px">Analysis confidence will appear here.</div>
   </section>
  </div>
- <div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.5</div>
+ <section class="panel">
+  <div class="flow-head"><div class="heading" style="margin:0"><span class="step">04</span><h3>Structured rule flow</h3></div><div class="actions" style="margin:0"><button class="secondary" onclick="exportPng()">Export PNG</button><button class="secondary" onclick="exportPdf()">Export PDF</button><button class="secondary" onclick="exportXlsx()">Export Excel</button></div></div>
+  <div class="flow-wrap"><div id="empty" class="empty"><div><div style="font-size:32px">◇</div><strong>No analysis generated</strong><p>Paste a screenshot and click Compute, interpret and transfer.</p></div></div><svg id="flow" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div id="reviewNote" class="status" style="display:none"></div>
+ </section>
+</section>
+</div>
+<div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.6</div>
 </main>
-
 <script>
-let pastedScreenshot=null,screenshotURL=null,extractedText="",parsedSteps=[],analysisData=null,spreadsheetRows=[];
-const $=id=>document.getElementById(id);
-function status(id,msg,type=""){const e=$(id);e.textContent=msg;e.className="status "+type;}
-function updateEvidence(t){extractedText=t||"";$("evidence").textContent=extractedText||"No text extracted.";}
-function updateCounts(){$("fileCount").textContent=(pastedScreenshot?1:0)+$("excelFile").files.length+$("xmlFile").files.length;}
-$("excelFile").addEventListener("change",updateCounts);$("xmlFile").addEventListener("change",updateCounts);
-
-const zone=$("screenshotPasteZone"),preview=$("screenshotPreview"),placeholder=$("pastePlaceholder");
-function setScreenshot(file){
- if(!file||!file.type.startsWith("image/")){status("uploadStatus","Please paste a valid image.","error");return;}
- if(screenshotURL)URL.revokeObjectURL(screenshotURL);
- pastedScreenshot=file;screenshotURL=URL.createObjectURL(file);
- preview.src=screenshotURL;preview.style.display="block";placeholder.style.display="none";
- $("computeButton").disabled=false;updateCounts();
- status("uploadStatus","Screenshot pasted. Click Compute & Transfer to Rule Logic.","success");
-}
+let imageFile=null,imageUrl=null,analysis=null,flowSteps=[],evidenceText="",ocrPasses=[];
+const el=id=>document.getElementById(id);
+function setStatus(id,msg,type=""){el(id).textContent=msg;el(id).className="status "+type}
+function setEvidence(t){evidenceText=t||"";el("evidence").textContent=evidenceText||"No text extracted."}
+function countFiles(){el("fileCount").textContent=(imageFile?1:0)+(el("sheetFile").files.length?1:0)+(el("xmlFile").files.length?1:0)}
+const zone=el("pasteZone");
+function acceptImage(file){if(!file||!file.type.startsWith("image/"))return setStatus("inputStatus","Clipboard did not contain an image.","err");if(imageUrl)URL.revokeObjectURL(imageUrl);imageFile=file;imageUrl=URL.createObjectURL(file);el("preview").src=imageUrl;el("preview").hidden=false;el("pasteHint").hidden=true;el("compute").disabled=false;countFiles();setStatus("inputStatus","Screenshot pasted. Click Compute, interpret and transfer.","ok")}
 zone.addEventListener("click",()=>zone.focus());
-zone.addEventListener("paste",handlePaste);
-document.addEventListener("paste",e=>{
- const t=e.target;if(t&&(t.isContentEditable||["INPUT","TEXTAREA"].includes(t.tagName)))return;
- handlePaste(e);
-});
-function handlePaste(e){
- const items=e.clipboardData?.items||[];
- for(const item of items){if(item.type.startsWith("image/")){e.preventDefault();setScreenshot(item.getAsFile());return;}}
-}
-zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover");});
-zone.addEventListener("dragleave",()=>zone.classList.remove("dragover"));
-zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("dragover");const f=[...e.dataTransfer.files].find(x=>x.type.startsWith("image/"));if(f)setScreenshot(f);});
-function clearScreenshot(){
- pastedScreenshot=null;if(screenshotURL){URL.revokeObjectURL(screenshotURL);screenshotURL=null;}
- preview.removeAttribute("src");preview.style.display="none";placeholder.style.display="block";
- $("computeButton").disabled=true;updateCounts();status("uploadStatus","Screenshot removed.");
-}
-async function computeAndTransfer(){
- if(!pastedScreenshot){status("uploadStatus","Paste a screenshot first.","error");return;}
- if(!window.Tesseract){status("uploadStatus","OCR library did not load. Check internet access and refresh.","error");return;}
- const b=$("computeButton");b.disabled=true;b.textContent="Computing OCR...";
- status("uploadStatus","Reading screenshot...");
+function pasteHandler(e){const items=e.clipboardData?.items||[];for(const it of items){if(it.type.startsWith("image/")){e.preventDefault();acceptImage(it.getAsFile());return}}}
+zone.addEventListener("paste",pasteHandler);document.addEventListener("paste",e=>{const t=e.target;if(t&&(t.isContentEditable||["INPUT","TEXTAREA"].includes(t.tagName)))return;pasteHandler(e)});
+zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("drag")});zone.addEventListener("dragleave",()=>zone.classList.remove("drag"));zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag");acceptImage([...e.dataTransfer.files].find(f=>f.type.startsWith("image/")))});
+function clearImage(){imageFile=null;if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=null;el("preview").hidden=true;el("preview").removeAttribute("src");el("pasteHint").hidden=false;el("compute").disabled=true;countFiles();setStatus("inputStatus","Screenshot removed.")}
+function preprocess(file,scale,contrast){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas");const w=img.naturalWidth*scale,h=img.naturalHeight*scale;c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);const im=x.getImageData(0,0,w,h);for(let i=0;i<im.data.length;i+=4){for(let k=0;k<3;k++){let v=im.data[i+k];v=(v-128)*contrast+128;im.data[i+k]=Math.max(0,Math.min(255,v));} }x.putImageData(im,0,0);c.toBlob(b=>b?resolve(b):reject(Error("Could not prepare image")),"image/png")};img.onerror=()=>reject(Error("Image could not be opened"));img.src=URL.createObjectURL(file)})}
+async function runOcr(file){
+ if(!window.Tesseract)throw Error("OCR engine did not load. Check internet access and refresh.");
+ const worker=await Tesseract.createWorker("eng",1,{logger:m=>{if(m.status==="recognizing text")setStatus("inputStatus","OCR pass running: "+Math.round(m.progress*100)+"%") }});
+ const variants=[[2,1.25],[3,1.5]];let best={text:"",score:-1,pass:""};
  try{
-  const result=await Tesseract.recognize(pastedScreenshot,"eng",{logger:m=>{if(m.status==="recognizing text")status("uploadStatus","OCR progress: "+Math.round(m.progress*100)+"%");}});
-  const text=(result.data.text||"").trim();
-  if(!text){status("uploadStatus","No readable text detected. Try a higher-resolution screenshot.","error");return;}
-  updateEvidence(text);$("logicInput").value=text;
-  status("uploadStatus","OCR complete. Extracted text transferred to Block 02. Now click Analyze rule.","success");
-  status("logicStatus","Text transferred. OCR can contain errors; review the conditions and actions before analysis.","success");
-  $("logicInput").scrollIntoView({behavior:"smooth",block:"center"});
- }catch(e){status("uploadStatus","OCR failed: "+e.message,"error");}
- finally{b.disabled=!pastedScreenshot;b.textContent="Compute & Transfer to Rule Logic";}
+  for(let i=0;i<variants.length;i++){
+   const blob=await preprocess(file,variants[i][0],variants[i][1]);
+   const result=await worker.recognize(blob,{tessedit_pageseg_mode:i===0?"6":"11",preserve_interword_spaces:"1"});
+   const text=(result.data.text||"").trim();const score=qualityScore(text);
+   ocrPasses.push({pass:i+1,score,text});
+   if(score>best.score)best={text,score,pass:"Pass "+(i+1)};
+  }
+ }finally{await worker.terminate()}
+ return best;
 }
-function useEvidenceAsLogic(){
- if(!extractedText){status("uploadStatus","No evidence to transfer.","error");return;}
- $("logicInput").value=extractedText;status("logicStatus","Evidence transferred. Review it and click Analyze rule.","success");
-}
-async function readSpreadsheet(){
- const f=$("excelFile").files[0];if(!f){status("uploadStatus","Choose an Excel or CSV file first.","error");return;}
- if(!window.XLSX){status("uploadStatus","Spreadsheet library did not load.","error");return;}
+function qualityScore(t){if(!t)return 0;const words=t.match(/[A-Za-z]{3,}/g)||[];const known=(t.match(/lookup|absence|employee|time|period|sick|leave|raise|message|calendar|start date|end date|then|equal|number|days|create|edit/gi)||[]).length;const garble=(t.match(/[^\x00-\x7F]/g)||[]).length;return words.length+known*5-garble*2}
+async function computeRule(){
+ if(!imageFile)return setStatus("inputStatus","Paste a screenshot first.","err");
+ const b=el("compute");b.disabled=true;b.textContent="Processing screenshot...";
+ ocrPasses=[];setStatus("inputStatus","Preparing enlarged, high-contrast image for OCR...");
  try{
-  const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),sheet=wb.Sheets[wb.SheetNames[0]];
-  spreadsheetRows=XLSX.utils.sheet_to_json(sheet,{defval:""});
-  const csv=XLSX.utils.sheet_to_csv(sheet);updateEvidence(csv);$("logicInput").value=csv;
-  if(spreadsheetRows.length){$("ruleCount").textContent=spreadsheetRows.length;const row=spreadsheetRows[0],k=Object.keys(row).find(x=>/rule.?name|name/i.test(x));if(k&&row[k])$("ruleName").value=row[k];}
-  status("uploadStatus","Imported "+spreadsheetRows.length+" spreadsheet rows and transferred their text to Block 02.","success");
- }catch(e){status("uploadStatus","Spreadsheet import failed: "+e.message,"error");}
-}
-async function readXML(){
- const f=$("xmlFile").files[0];if(!f){status("uploadStatus","Choose an XML file first.","error");return;}
- try{
-  const doc=new DOMParser().parseFromString(await f.text(),"application/xml");if(doc.querySelector("parsererror"))throw Error("Invalid XML.");
-  const lines=[];function walk(n,d=0){if(n.nodeType!==1)return;const a=[...n.attributes].map(x=>x.name+"="+x.value).join(" ");const v=[...n.childNodes].filter(x=>x.nodeType===3).map(x=>x.nodeValue.trim()).filter(Boolean).join(" ");lines.push("  ".repeat(Math.min(d,8))+"<"+n.tagName+(a?" "+a:"")+">"+(v?" "+v:""));[...n.children].forEach(c=>walk(c,d+1));}
-  walk(doc.documentElement);const txt=lines.join("\n");updateEvidence(txt);$("logicInput").value=txt;
-  status("uploadStatus","XML loaded and transferred to Block 02. SAP rule semantics still require validation.","success");
- }catch(e){status("uploadStatus","XML import failed: "+e.message,"error");}
+  const best=await runOcr(imageFile);
+  if(!best.text)throw Error("No readable text was found. Use a sharper or larger screenshot.");
+  setEvidence(best.text);el("logic").value=best.text;
+  setStatus("inputStatus",best.pass+" selected from "+ocrPasses.length+" OCR passes. Text transferred; rule interpretation is starting.","ok");
+  analyzeCurrent(true);
+  el("logic").scrollIntoView({behavior:"smooth",block:"center"});
+ }catch(e){setStatus("inputStatus","Processing failed: "+e.message,"err")}
+ finally{b.disabled=!imageFile;b.textContent="Compute, interpret and transfer"}
 }
 
-/* Conservative text analysis. It extracts visible statements and keyword signals;
-   it does not claim to reconstruct SAP's full nested rule execution tree. */
-function cleanLine(s){return s.replace(/[|•]/g," ").replace(/\s+/g," ").trim();}
-function splitRuleText(text){
- return text.split(/\r?\n/).map(cleanLine).filter(x=>x.length>2);
-}
-function detectComponents(text){
- const t=text.toLowerCase(),out=[];
- const groups=[
-  ["Time Off / Leave",/\bleave\b|\btime off\b|\babsence\b|\bvacation\b|\bsick\b/],
-  ["Time Management",/\btime\b|\btimesheet\b|\bclock\b|\bovertime\b|\bworking time\b|\btime type\b/],
-  ["Attendance",/\battendance\b|\bpunch\b|\bcheck.?in\b|\bcheck.?out\b|\bbiometric\b/],
-  ["Employee Central",/\bemployeecentral\b|\bemployee\b|\bjob information\b|\bemployment\b|\buser\b|\bposition\b/],
-  ["Workflow",/\bworkflow\b|\bapproval\b|\bapprover\b|\broute map\b/],
-  ["Payroll",/\bpayroll\b|\bpay component\b|\bwage type\b|\bpay group\b/],
-  ["Recruiting",/\brequisition\b|\bcandidate\b|\bjob application\b|\boffer\b/],
-  ["Onboarding",/\bonboarding\b|\bnew hire\b|\bnew employee\b/],
-  ["Compensation",/\bcompensation\b|\bsalary\b|\bmerit\b|\bbonus\b/],
-  ["Learning",/\blearning\b|\bcourse\b|\btraining\b|\blms\b/],
-  ["Performance & Goals",/\bperformance\b|\bgoal\b|\bcompetenc\b|\bobjective\b/],
-  ["MDF / Custom Objects",/\bmdf\b|\bcustom object\b|\bcust_|\bobject definition\b/]
+/* Domain-aware, cautious interpretation for common SuccessFactors rule constructs.
+   OCR text remains untrusted evidence; every inferred element is visibly marked. */
+function normalize(t){return t.replace(/\u00a0/g," ").replace(/[‐‑–—]/g,"-").replace(/\s+/g," ").trim()}
+function has(t,re){return re.test(t)}
+function extractFunctionNames(t){
+ const defs=[
+  ["Lookup()","lookup\\s*\\("],
+  ["Add Multiple()","add\\s*multiple\\s*\\("],
+  ["Get Absence in Days for Period Based on Calendar Days For Time Types()","get\\s*absence\\s*in\\s*days\\s*for\\s*period\\s*based\\s*on\\s*calendar\\s*days\\s*for\\s*time\\s*types\\s*\\("],
+  ["Raise Message","raise\\s*message"],
+  ["Date Plus()","date\\s*plus\\s*\\("]
  ];
- groups.forEach(([name,re])=>{if(re.test(t))out.push(name);});
- return out.length?out:["Not confidently identified"];
+ return defs.filter(d=>new RegExp(d[1],"i").test(t)).map(d=>d[0]);
 }
-function extractActions(lines){
- const found=[];
- const patterns=[/raise message/i,/set\s+.+?\s+to\s+/i,/create\s+.+/i,/update\s+.+/i,/delete\s+.+/i,/trigger\s+.+/i,/return\s+.+/i,/send\s+.+/i,/assign\s+.+/i];
- lines.forEach(line=>{
-  if(/^(then|else|if|else if)\b/i.test(line))return;
-  if(patterns.some(r=>r.test(line))||/raise message/i.test(line))found.push(line);
- });
- return [...new Set(found)].slice(0,12);
+function interpretRule(raw){
+ const t=normalize(raw),low=t.toLowerCase(),lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const functions=extractFunctionNames(t);
+ const createEdit=/processing action.{0,40}(create|edit)/i.test(t)||(/\bcreate\b/i.test(t)&&/\bedit\b/i.test(t));
+ const isSick=/sick[\s_-]*leave|sickleave/i.test(t);
+ const isAbsence=/absence in days|absence days/i.test(t);
+ const isTimeOff=/employee time|time type|leave period|time off/i.test(t);
+ const limitMatch=t.match(/(?:>\s*|greater than\s*)(\d{1,3})/i)||t.match(/maximum\s+(\d{1,3})\s*days/i);
+ const limit=limitMatch?Number(limitMatch[1]):null;
+ const raise=/raise\s*message/i.test(t);
+ const msgLine=lines.find(x=>/maximum.{0,80}days|raise\s*message/i.test(x));
+ const components=[];
+ if(isTimeOff||isSick)components.push("Employee Central – Employee Time");
+ if(isSick||/leave period/i.test(t))components.push("Time Off – Leave configuration");
+ if(/time type/i.test(t))components.push("Employee Time Type");
+ if(isAbsence||/calendar days/i.test(t))components.push("Absence duration calculation");
+ if(raise)components.push("Business Rule – Raise Message");
+ if(!components.length)components.push("Not confidently identified");
+ const groups=[];
+ if(/\bor\b/i.test(t))groups.push("OR group detected in source text");
+ if(/\band\b/i.test(t))groups.push("AND group detected in source text");
+ const nodes=[];
+ nodes.push({type:"start",title:"Rule triggered",detail:createEdit?"Processing action: Create or Edit":"Rule execution trigger (verify event)"});
+ if(groups.length)nodes.push({type:"group",title:"Logical grouping",detail:groups.join(" · ")});
+ if(functions.includes("Lookup()"))nodes.push({type:"lookup",title:"Lookup sick-leave period",detail:"Lookup() appears in the rule. It retrieves a Sick Leave Period record; lookup filters need source verification."});
+ if(functions.includes("Add Multiple()"))nodes.push({type:"calculation",title:"Calculate absence total",detail:"Add Multiple() appears to aggregate absence-day values. Confirm its inputs and the exact aggregation scope."});
+ if(functions.some(x=>x.startsWith("Get Absence")))nodes.push({type:"calculation",title:"Calculate absence days",detail:"Get Absence in Days for Period Based on Calendar Days For Time Types() appears in the rule."});
+ if(limit!==null)nodes.push({type:"decision",title:"Compare against "+limit+" days",detail:"The OCR/source text shows a comparison with "+limit+". Confirm whether this comparison is >, ≥ or another operator."});
+ if(raise)nodes.push({type:"action",title:"Raise error message",detail:msgLine||"Raise Message is present; exact message text should be checked against the source."});
+ nodes.push({type:"end",title:"Rule evaluation ends",detail:"End of this validation path"});
+ let purpose="The supplied text contains SuccessFactors rule constructs, but the business purpose cannot be identified confidently. Review the extracted text and source image.";
+ let behaviour="No reliable action could be confirmed.";
+ if(isSick&&limit!==null)purpose="The rule appears to prevent sick-leave usage from exceeding a "+limit+"-day threshold within a configured leave period.";
+ else if(isSick)purpose="The rule appears to validate sick-leave entitlement or usage against a configured leave period.";
+ if(raise&&isSick&&limit!==null)behaviour="It appears to calculate absence days for the relevant sick-leave period, compare the result with "+limit+" days and raise an error message when the rule condition is met.";
+ else if(raise)behaviour="It appears to raise a validation message when its configured condition is met.";
+ else if(functions.length)behaviour="The rule uses "+functions.join(", ")+". The exact outcome needs confirmation from the complete rule logic.";
+ const trigger=[];
+ if(createEdit)trigger.push("Processing action: Create / Edit");
+ if(/employee time\.start date/i.test(t))trigger.push("Employee Time.Start Date");
+ if(/employee time\.end date/i.test(t))trigger.push("Employee Time.End Date");
+ if(/employee time\.user/i.test(t))trigger.push("Employee Time.User");
+ if(/externalcode/i.test(t))trigger.push("Sick Leave Period.externalCode");
+ if(!trigger.length)trigger.push("Trigger and field references need source verification");
+ const score=(functions.length?2:0)+(isSick?2:0)+(limit!==null?1:0)+(raise?1:0)+(createEdit?1:0);
+ const confidence=score>=6?"Moderate – recognizable constructs found; validate all operators and parameters":score>=3?"Low to moderate – partial constructs recognized; verify against source":"Low – OCR text does not provide enough reliable structure";
+ const warnings=[];
+ if(!functions.length)warnings.push("No known SuccessFactors functions were confidently recognized.");
+ if(!/then/i.test(t))warnings.push("THEN section was not clearly recognized.");
+ if(/\b(and|or)\b/i.test(t))warnings.push("AND/OR grouping was detected as text only; exact nesting and precedence are not reconstructed.");
+ warnings.push("This prototype does not execute SAP rules or validate the tenant configuration.");
+ return {purpose,behaviour,components,trigger,functions,groups,nodes,confidence,warnings,limit,isSick,raise,createEdit,raw};
 }
-function buildAnalysis(text){
- const lines=splitRuleText(text),lower=text.toLowerCase();
- const thenAt=lines.findIndex(x=>/^then\b/i.test(x));
- let conditionLines=[],actionLines=[];
- if(thenAt>=0){conditionLines=lines.slice(0,thenAt).filter(x=>!/^if\b/i.test(x)||x.length>3);actionLines=extractActions(lines.slice(thenAt+1));}
- else{
-  conditionLines=lines.filter(x=>/\b(if|equal to|before|after|greater than|less than|is not|is equal|contains|starts with)\b/i.test(x));
-  actionLines=extractActions(lines);
- }
- conditionLines=conditionLines.filter(x=>!/^then\b/i.test(x)).slice(0,10);
- const components=detectComponents(text);
- const actions=actionLines.length?actionLines:["No clear action statement was reliably extracted"];
- const triggers=conditionLines.length?conditionLines.slice(0,4):["No explicit condition was confidently extracted"];
- const hasMessage=/raise message/i.test(text);
- const messageMatch=lines.find(x=>/raise message/i.test(x));
- let purpose="The rule appears to apply a business validation or automation based on the conditions visible in the extracted text.";
- if(hasMessage)purpose="The rule appears to validate an employee or transaction condition and display an error or warning message when the condition is met.";
- if(/\b120\b/.test(text)&&/sick|leave|time off/i.test(text))purpose="The rule appears to enforce a limit or eligibility validation related to sick leave / time off, with a 120-day period mentioned in the extracted text.";
- if(/\b180\b/.test(text)&&/leave|backdat/i.test(text))purpose="The rule appears to restrict backdated leave requests using a 180-day threshold.";
- let does=messageMatch?messageMatch:actions.join(" | ");
- if(does.length>260)does=does.slice(0,257)+"...";
- const confidence=(conditionLines.length&&actionLines.length&&components[0]!=="Not confidently identified")?"Moderate (OCR-derived evidence)":"Low to moderate (OCR text is incomplete or ambiguous)";
- return {lines,conditions:conditionLines,actions,triggers,components,purpose,does,confidence,hasMessage};
+function analyzeCurrent(auto=false){
+ const raw=el("logic").value.trim();if(!raw){setStatus("logicStatus","Paste or transfer rule text before analysis.","err");return}
+ analysis=interpretRule(raw);flowSteps=analysis.nodes;renderSummary();drawFlow(flowSteps);
+ el("ruleCount").textContent="1";el("nodeCount").textContent=String(flowSteps.length);
+ el("reviewNote").style.display="block";el("reviewNote").className="status warn";el("reviewNote").textContent="Review required: "+analysis.warnings.join(" ");
+ setStatus("logicStatus",auto?"Automatic analysis complete. Check the extracted text, recognized functions and warnings against the original screenshot.":"Analysis complete. Review every inferred function, condition and action against the original screenshot.","ok");
 }
-function analyzeRule(){
- const text=$("logicInput").value.trim();
- if(!text){status("logicStatus","Paste or transfer rule text before analysis.","error");return;}
- analysisData=buildAnalysis(text);
- $("purposeText").textContent=analysisData.purpose;
- $("doesText").textContent=analysisData.does;
- $("triggerText").textContent=analysisData.triggers.slice(0,3).join(" • ");
- $("componentChips").innerHTML="";
- analysisData.components.forEach(c=>{const s=document.createElement("span");s.className="chip"+(c==="Not confidently identified"?" neutral":"");s.textContent=c;$("componentChips").appendChild(s);});
- $("ruleSummary").textContent="RRuleLens has prepared a preliminary explanation from the visible rule text. Confirm the interpretation against the original SuccessFactors rule configuration.";
- $("confidenceText").textContent="Interpretation confidence: "+analysisData.confidence+". This is evidence-based classification, not AI reasoning or tenant validation.";
- parsedSteps=makeSteps(analysisData);
- drawFlow(parsedSteps);
- $("ruleCount").textContent="1";$("nodeCount").textContent=parsedSteps.length+2;
- status("logicStatus","Analysis complete. Review the purpose, components and each flowchart step against the original rule.","success");
+function renderSummary(){
+ el("purpose").textContent=analysis.purpose;el("behaviour").textContent=analysis.behaviour;el("triggers").textContent=analysis.trigger.join(" · ");
+ el("components").innerHTML="";analysis.components.forEach(x=>{const s=document.createElement("span");s.className="chip"+(x.startsWith("Not confidently")?" gray":"");s.textContent=x;el("components").appendChild(s)});
+ el("summaryLead").textContent="Preliminary interpretation: "+analysis.purpose+" This explanation is inferred from OCR text and recognized SuccessFactors terms, not from SAP execution.";
+ el("confidence").textContent="Interpretation confidence: "+analysis.confidence+". Recognized functions: "+(analysis.functions.join(", ")||"none confidently recognized")+".";
 }
-function makeSteps(a){
- const steps=[];
- if(a.conditions.length){
-  a.conditions.forEach((c,i)=>steps.push({type:"condition",title:"Condition "+(i+1),detail:c}));
- }else{
-  steps.push({type:"note",title:"Condition not identified",detail:"No reliable condition was extracted from the supplied text."});
- }
- a.actions.forEach((x,i)=>steps.push({type:"action",title:"Action "+(i+1),detail:x}));
- if(!a.actions.length)steps.push({type:"note",title:"Action not identified",detail:"Review the THEN section in the source rule."});
- return steps.slice(0,12);
-}
-function drawFlow(steps){
- const svg=$("flowchart"),W=900,boxW=650,boxH=76,gap=28,left=(W-boxW)/2,top=25;
- const H=top+55+steps.length*(boxH+gap)+70;
+function drawFlow(nodes){
+ const svg=el("flow"),W=1000,boxW=740,boxH=82,gap=25,left=(W-boxW)/2,top=28,H=top+55+nodes.length*(boxH+gap)+50;
  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("height",H);svg.innerHTML="";
- const NS="http://www.w3.org/2000/svg";
- function el(tag,attrs,parent=svg){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));parent.appendChild(n);return n;}
- function text(x,y,str,size=14,weight=500,color="#263754",anchor="middle"){
-  const t=el("text",{x,y,"font-size":size,"font-weight":weight,fill:color,"text-anchor":anchor});
-  t.textContent=str;return t;
- }
- function wrap(str,max=78){
-  const words=String(str).split(/\s+/),out=[];let line="";
-  words.forEach(w=>{if((line+" "+w).trim().length>max&&line){out.push(line);line=w;}else line=(line+" "+w).trim();});
-  if(line)out.push(line);return out.slice(0,2);
- }
- // Start pill
- el("rect",{x:W/2-105,y:top,width:210,height:44,rx:22,fill:"#eaf0ff",stroke:"#5577ec","stroke-width":2});
- text(W/2,top+28,"RULE START",13,750,"#304d9d");
- let prevY=top+44;
- steps.forEach((s,i)=>{
-  const y=top+70+i*(boxH+gap),cx=W/2;
-  // Smooth curved connector
-  el("path",{d:`M ${cx} ${prevY} C ${cx} ${prevY+16}, ${cx} ${y-16}, ${cx} ${y}`,fill:"none",stroke:"#aab7ce","stroke-width":2.4,"stroke-linecap":"round"});
-  let fill=s.type==="condition"?"#eef3ff":s.type==="action"?"#eaf8f0":"#fff7e9";
-  let stroke=s.type==="condition"?"#718be5":s.type==="action"?"#45a36d":"#d4a24f";
-  el("rect",{x:left,y,width:boxW,height:boxH,rx:15,fill,stroke,"stroke-width":1.8});
-  el("rect",{x:left+14,y:y+13,width:7,height:boxH-26,rx:4,fill:stroke,stroke:"none"});
-  text(left+38,y+26,s.title.toUpperCase(),10,800,stroke,"start");
-  const lines=wrap(s.detail);
-  lines.forEach((ln,j)=>text(W/2,y+49+j*16,ln,12,550,"#27364f"));
-  prevY=y+boxH;
+ const ns="http://www.w3.org/2000/svg";function add(tag,attrs){const n=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));svg.appendChild(n);return n}
+ function txt(x,y,s,size=13,weight=500,color="#263754",anchor="middle"){const n=add("text",{x,y,"font-size":size,"font-weight":weight,fill:color,"text-anchor":anchor});n.textContent=s}
+ function lines(s,max=95){const a=String(s).split(/\s+/),o=[];let l="";for(const w of a){if((l+" "+w).trim().length>max&&l){o.push(l);l=w}else l=(l+" "+w).trim()}if(l)o.push(l);return o.slice(0,2)}
+ add("rect",{x:W/2-110,y:top,width:220,height:48,rx:24,fill:"#eaf0ff",stroke:"#5577ec","stroke-width":2});txt(W/2,top+30,"RULE START",13,800,"#304d9d");
+ let prev=top+48;
+ nodes.forEach((s,i)=>{const y=top+75+i*(boxH+gap),cx=W/2;add("path",{d:`M${cx},${prev} C${cx},${prev+14} ${cx},${y-14} ${cx},${y}`,fill:"none",stroke:"#aab7ce","stroke-width":2.4,"stroke-linecap":"round"});
+  const colors={start:["#edf2ff","#5877d9"],group:["#f2edff","#8663c7"],lookup:["#eef7ff","#5591c8"],calculation:["#fff7e9","#d19a37"],decision:["#fff6e8","#d18b2e"],action:["#eaf8ef","#45a36d"],end:["#eaf8ef","#45a36d"]};const [fill,stroke]=colors[s.type]||["#f5f7fb","#9aa8bd"];
+  add("rect",{x:left,y,width:boxW,height:boxH,rx:15,fill,stroke,"stroke-width":1.8});
+  add("rect",{x:left+14,y:y+14,width:7,height:boxH-28,rx:4,fill:stroke});
+  txt(left+38,y+29,s.title.toUpperCase(),11,800,stroke,"start");
+  lines(s.detail).forEach((l,j)=>txt(W/2,y+53+j*16,l,12,500,"#263754"));
+  prev=y+boxH;
  });
- const endY=prevY+gap;
- el("path",{d:`M ${W/2} ${prevY} C ${W/2} ${prevY+12}, ${W/2} ${endY-12}, ${W/2} ${endY}`,fill:"none",stroke:"#aab7ce","stroke-width":2.4,"stroke-linecap":"round"});
- el("rect",{x:W/2-105,y:endY,width:210,height:44,rx:22,fill:"#e8f7ed",stroke:"#45a36d","stroke-width":2});
- text(W/2,endY+28,"RULE END",13,750,"#267747");
- $("emptyState").style.display="none";svg.style.display="block";
+ const ey=prev+gap;add("path",{d:`M${W/2},${prev} C${W/2},${prev+12} ${W/2},${ey-12} ${W/2},${ey}`,fill:"none",stroke:"#aab7ce","stroke-width":2.4});add("rect",{x:W/2-110,y:ey,width:220,height:44,rx:22,fill:"#e8f7ed",stroke:"#45a36d","stroke-width":2});txt(W/2,ey+28,"END",13,800,"#267747");
+ el("empty").style.display="none";svg.style.display="block";
 }
-function loadExample(){
- $("ruleName").value="Sick Leave Duration Validation";
- $("logicInput").value="Employee Time Type is equal to Sick Leave\nEmployee Time Start Date is before Date Plus(Base Date: Today(), Number of Days: -120)\nThen\nRaise Message: Maximum 120 days of sick leave can be taken within period.";
- status("logicStatus","Example loaded. Click Analyze rule.","success");
+function loadSickExample(){
+ el("ruleName").value="Sick Leave Entitlement Validation";
+ el("logic").value=`Take Rule Parameters.Processing Action is equal to Create OR Edit
+Lookup(Sick Leave Period)
+Sick Leave Period.externalCode is not equal to Null
+Add Multiple()
+Number: Get Absence in Days For Period Based On Calendar Days For Time Types()
+> 120
+Get Absence In Days For Period Based On Calendar Days For Time Types()
+> 0
+Then
+Raise Message "SickLeaveEntitlementV2" with Error severity
+Maximum 120 Days sick leave can be taken within period.`;
+ setEvidence(el("logic").value);analyzeCurrent();
 }
-function clearLogic(){
- $("logicInput").value="";analysisData=null;parsedSteps=[];
- $("flowchart").style.display="none";$("emptyState").style.display="grid";
- $("nodeCount").textContent="0";$("ruleCount").textContent="0";
- $("purposeText").textContent="Not analyzed yet.";$("doesText").textContent="Not analyzed yet.";
- $("triggerText").textContent="Not analyzed yet."; $("componentChips").innerHTML='<span class="chip neutral">Awaiting analysis</span>';
- $("ruleSummary").textContent="Analyze a rule to generate its purpose and impact summary.";
-}
-function exportPNG(){
- if(!parsedSteps.length){alert("Analyze a rule first.");return;}
- const source=$("flowchart"),copy=source.cloneNode(true);copy.setAttribute("xmlns","http://www.w3.org/2000/svg");
- const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml;charset=utf-8"}),url=URL.createObjectURL(blob),img=new Image();
- img.onload=()=>{const c=document.createElement("canvas");c.width=1800;c.height=Number(source.getAttribute("height"))*2;const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);const a=document.createElement("a");a.download="RRuleLens_Rule_Flow.png";a.href=c.toDataURL("image/png");a.click();URL.revokeObjectURL(url);};
- img.onerror=()=>{URL.revokeObjectURL(url);alert("PNG export failed.");};img.src=url;
-}
-function exportPDF(){
- if(!parsedSteps.length){alert("Analyze a rule first.");return;}
- const w=window.open("","_blank");if(!w){alert("Allow pop-ups to export PDF.");return;}
- w.document.write("<!doctype html><html><head><title>RRuleLens Rule Analysis</title><style>body{font-family:Arial;padding:28px;color:#1d2940}svg{width:100%;height:auto}button{padding:10px 15px}@media print{button{display:none}}</style></head><body></body></html>");w.document.close();
- const d=w.document;const h=d.createElement("h1");h.textContent="RRuleLens - Rule Analysis";d.body.appendChild(h);
- [ "Rule: "+$("ruleName").value,"Purpose: "+$("purposeText").textContent,"What it does: "+$("doesText").textContent,"Components: "+analysisData.components.join(", ") ].forEach(t=>{const p=d.createElement("p");p.textContent=t;d.body.appendChild(p);});
- const holder=d.createElement("div");holder.innerHTML=$("flowchart").outerHTML;d.body.appendChild(holder);
- const b=d.createElement("button");b.textContent="Print / Save as PDF";b.onclick=()=>w.print();d.body.appendChild(b);
-}
-function exportExcel(){
- if(!parsedSteps.length){alert("Analyze a rule first.");return;}if(!window.XLSX){alert("Excel library unavailable.");return;}
- const wb=XLSX.utils.book_new();
- const summary=[
- ["RRuleLens Rule Analysis"],["Rule name",$("ruleName").value],["Business purpose",analysisData.purpose],
- ["What the rule does",analysisData.does],["Impacted components",analysisData.components.join(", ")],
- ["Interpretation confidence",analysisData.confidence],["Review note","OCR-derived interpretation. Validate against original SuccessFactors configuration."]
- ];
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),"Purpose Summary");
- const rows=parsedSteps.map((s,i)=>({Sequence:i+1,Type:s.type,Step:s.title,ExtractedText:s.detail}));
- XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Rule Steps");
- XLSX.writeFile(wb,"RRuleLens_Rule_Analysis.xlsx");
-}
+function clearLogic(){el("logic").value="";analysis=null;flowSteps=[];el("flow").style.display="none";el("empty").style.display="grid";el("ruleCount").textContent="0";el("nodeCount").textContent="0";["purpose","behaviour","triggers"].forEach(id=>el(id).textContent="Not analyzed.");el("components").innerHTML='<span class="chip gray">Awaiting analysis</span>';el("summaryLead").textContent="After analysis, this block explains the rule's likely business purpose, behaviour and evidence confidence.";el("reviewNote").style.display="none";setStatus("logicStatus","Cleared.")}
+async function readSheet(){const f=el("sheetFile").files[0];if(!f)return setStatus("inputStatus","Choose an Excel or CSV file first.","err");if(!window.XLSX)return setStatus("inputStatus","Spreadsheet library did not load.","err");try{const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),sh=wb.Sheets[wb.SheetNames[0]],txt=XLSX.utils.sheet_to_csv(sh);setEvidence(txt);el("logic").value=txt;countFiles();analyzeCurrent(true);setStatus("inputStatus","Spreadsheet imported and analyzed. Check the source rows and interpretation.","ok")}catch(e){setStatus("inputStatus","Import failed: "+e.message,"err")}}
+async function readXml(){const f=el("xmlFile").files[0];if(!f)return setStatus("inputStatus","Choose an XML file first.","err");try{const doc=new DOMParser().parseFromString(await f.text(),"application/xml");if(doc.querySelector("parsererror"))throw Error("Invalid XML");const out=[];function walk(n,d=0){if(n.nodeType!==1)return;const attrs=[...n.attributes].map(a=>a.name+"="+a.value).join(" ");const val=[...n.childNodes].filter(c=>c.nodeType===3).map(c=>c.nodeValue.trim()).filter(Boolean).join(" ");out.push(" ".repeat(d*2)+"<"+n.tagName+(attrs?" "+attrs:"")+"> "+val);[...n.children].forEach(c=>walk(c,d+1))}walk(doc.documentElement);const t=out.join("\n");setEvidence(t);el("logic").value=t;countFiles();analyzeCurrent(true);setStatus("inputStatus","XML loaded and analyzed. XML element names are shown; this is not yet a schema-aware SAP rule parser.","ok")}catch(e){setStatus("inputStatus","XML read failed: "+e.message,"err")}}
+function exportPng(){if(!flowSteps.length)return alert("Analyze a rule first.");const s=el("flow"),copy=s.cloneNode(true);copy.setAttribute("xmlns","http://www.w3.org/2000/svg");const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}),url=URL.createObjectURL(blob),img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=2000;c.height=Number(s.getAttribute("height"))*2;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="RRuleLens_Flow.png";a.click();URL.revokeObjectURL(url)};img.src=url}
+function exportPdf(){if(!flowSteps.length)return alert("Analyze a rule first.");const w=window.open("","_blank");if(!w)return alert("Allow pop-ups to print PDF.");w.document.write("<title>RRuleLens analysis</title><style>body{font-family:Arial;padding:25px}svg{width:100%;height:auto}button{padding:10px}@media print{button{display:none}}</style><h1>RRuleLens – Rule Analysis</h1>");w.document.write("<h3>"+escapeHtml(el("ruleName").value)+"</h3><p>"+escapeHtml(analysis.purpose)+"</p><p>"+escapeHtml(analysis.behaviour)+"</p>"+el("flow").outerHTML+"<button onclick='print()'>Print / Save PDF</button>");w.document.close()}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function exportXlsx(){if(!flowSteps.length)return alert("Analyze a rule first.");if(!window.XLSX)return alert("Excel library unavailable.");const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Rule name",el("ruleName").value],["Purpose",analysis.purpose],["Behaviour",analysis.behaviour],["Components",analysis.components.join(", ")],["Triggers",analysis.trigger.join("; ")],["Confidence",analysis.confidence],["Warnings",analysis.warnings.join("; ")]]),"Purpose");XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(flowSteps.map((s,i)=>({Sequence:i+1,Type:s.type,Step:s.title,Explanation:s.detail}))),"Flow Steps");XLSX.writeFile(wb,"RRuleLens_V0.6_Analysis.xlsx")}
 </script>
-</body>
-</html>
+</body></html>
