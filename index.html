@@ -27,7 +27,7 @@ button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:not-allowe
 .status{margin-top:9px;padding:9px 10px;border-radius:8px;background:#f0f4fb;color:#42516c;font-size:11px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}.status.ok{background:#eaf8ef;color:#20643b}.status.warn{background:#fff6e8;color:#875b17}.status.err{background:#fff0f0;color:#a42c2c}
 .small{font-size:10px;color:var(--muted);line-height:1.5}
 .paste{min-height:170px;border:2px dashed #9aabc5;border-radius:11px;background:#f7f9ff;display:grid;place-items:center;text-align:center;padding:12px;cursor:pointer;overflow:hidden}.paste:focus,.paste.drag{outline:none;border-color:var(--blue);background:#eef3ff}.paste img{max-width:100%;max-height:245px;object-fit:contain;border-radius:7px}.paste strong{display:block;margin:8px 0;font-size:12px}.paste p{font-size:11px;color:#536582;margin:5px}
-.top{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,1.12fr);gap:14px}.top .panel{margin-bottom:14px}
+.top{display:grid;grid-template-columns:minmax(0,0.95fr) minmax(0,1.25fr);gap:14px;align-items:start}.top .panel{margin-bottom:14px}.top .flow-wrap{min-height:540px}.top #flow{min-height:520px}.top .assessment-grid{grid-template-columns:1fr}
 .summary-lead{padding:11px;border-radius:9px;background:#f0f4fb;font-size:11px;line-height:1.5;min-height:68px}
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
 .assessment-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
@@ -52,11 +52,11 @@ button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:not-allowe
 .evidence{max-height:220px;overflow:auto;background:#f6f8fc;border-radius:8px;padding:10px;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
 .footer{text-align:center;color:#8b96a8;font-size:10px;padding:18px}
 @media(max-width:1100px){.layout{grid-template-columns:290px 1fr}.top{grid-template-columns:1fr}}
-@media(max-width:760px){header{padding:12px}.layout{grid-template-columns:1fr}main{padding:12px}.metrics{grid-template-columns:1fr 1fr}.summary-grid,.assessment-grid,.reference-table{grid-template-columns:1fr}}
+@media(max-width:900px){.top{grid-template-columns:1fr}.top .assessment-grid{grid-template-columns:1fr 1fr}}\n@media(max-width:760px){header{padding:12px}.layout{grid-template-columns:1fr}main{padding:12px}.metrics{grid-template-columns:1fr 1fr}.summary-grid,.assessment-grid,.reference-table{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><div class="brand"><div class="logo">R</div><div><h1><span class="rr">RR</span>uleLens</h1><p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p></div></div><div class="version">PROTOTYPE V0.7</div></header>
+<header><div class="brand"><div class="logo">R</div><div><h1><span class="rr">RR</span>uleLens</h1><p>SUCCESSFACTORS BUSINESS RULE ANALYZER</p></div></div><div class="version">PROTOTYPE V0.8</div></header>
 <main>
 <section class="hero"><h2>Understand what your SuccessFactors rules actually do.</h2><p>Paste a rule screenshot, improve OCR extraction, inspect recognized functions and build a structured rule explanation and decision flow.</p></section>
 <section class="metrics">
@@ -67,7 +67,9 @@ button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:not-allowe
 <div class="layout">
 <aside>
  <section class="panel">
-  <div class="heading"><span class="step">01</span><h3>Screenshot and file input</h3></div>
+  <div class="heading"><span class="step">01</span><h3>Input and rule details</h3></div>
+  <label>Rule name</label><input id="ruleName" type="text" value="Untitled SuccessFactors Rule">
+  <label>Rule description / business context (optional)</label><input id="ruleDescription" type="text" placeholder="Add known business context">
   <label>Paste SuccessFactors rule screenshot</label>
   <div id="pasteZone" class="paste" tabindex="0"><div id="pasteHint"><div style="font-size:30px">📋</div><strong>Paste screenshot here</strong><p>Click this area and press Ctrl + V</p><p>Or drag and drop an image</p></div><img id="preview" alt="Pasted rule screenshot" hidden></div>
   <button id="compute" class="full purple" disabled onclick="computeRule()">Compute, interpret and transfer</button>
@@ -79,20 +81,18 @@ button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:not-allowe
   <div id="inputStatus" class="status">Paste an image to begin. Compute will now run OCR and analysis automatically.</div>
   <p class="small">OCR runs in this browser. No external AI service, SAP connection or server-side processing is used. OCR and interpretation can be wrong; verify against the source rule.</p>
  </section>
- <section class="panel"><div class="heading"><span class="step">E</span><h3>Extracted source evidence</h3></div><div id="evidence" class="evidence">Source evidence will appear here.</div><p class="small">OCR output is evidence, not confirmed rule logic. Edit the extracted text if recognition is incorrect.</p></section>
+ <section class="panel"><div class="heading"><span class="step">E</span><h3>Extracted source evidence</h3></div><div id="evidence" class="evidence">Source evidence will appear here.</div><p class="small">OCR output is evidence, not confirmed rule logic. Review and correct it before analysis if recognition is inaccurate.</p><label>Extracted / editable rule logic</label><textarea id="logic" placeholder="OCR text will appear here after Compute. You can also paste rule text directly."></textarea><div class="actions"><button onclick="analyzeCurrent()">Analyze rule</button><button class="secondary" onclick="loadSickExample()">Load example</button><button class="secondary" onclick="clearLogic()">Clear</button></div><div id="logicStatus" class="status">Waiting for source evidence.</div></section>
 </aside>
 <section>
  <div class="top">
   <section class="panel">
-   <div class="heading"><span class="step">02</span><h3>Rule information and logic</h3></div>
-   <label>Rule name</label><input id="ruleName" type="text" value="Untitled SuccessFactors Rule">
-   <label>Rule description / business context (optional)</label><input id="ruleDescription" type="text" placeholder="Add known business context">
-   <label>Extracted / editable rule text</label><textarea id="logic" placeholder="Paste screenshot and click Compute, or paste rule text here."></textarea>
-   <div class="actions"><button onclick="analyzeCurrent()">Analyze rule</button><button class="secondary" onclick="loadSickExample()">Load sick-leave example</button><button class="secondary" onclick="clearLogic()">Clear</button></div>
-   <div id="logicStatus" class="status">Waiting for source evidence.</div>
+   <div class="flow-head"><div class="heading" style="margin:0"><span class="step">02</span><h3>Rule flowchart</h3></div><div class="actions" style="margin:0"><button class="secondary" onclick="exportPng()">Export PNG</button><button class="secondary" onclick="exportPdf()">Export PDF</button></div></div>
+   <p class="small">Visual sequence of the recognized rule logic. Validate each condition, branch and action against the original SuccessFactors rule.</p>
+   <div class="flow-wrap"><div id="empty" class="empty"><div><div style="font-size:32px">◇</div><strong>No analysis generated</strong><p>Paste a screenshot and click Compute, interpret and transfer.</p></div></div><svg id="flow" xmlns="http://www.w3.org/2000/svg"></svg></div>
+   <div id="reviewNote" class="status" style="display:none"></div>
   </section>
   <section class="panel">
-   <div class="heading"><span class="step">03</span><h3>Complete rule analysis – 10 assessment areas</h3></div>
+   <div class="heading"><span class="step">03</span><h3>Complete rule analysis – 10 assessment areas</h3><button class="secondary" style="margin-left:auto" onclick="exportXlsx()">Export analysis to Excel</button></div>
    <div id="summaryLead" class="summary-lead">RRuleLens will organize the analysis into rule identification, business purpose, technical context, execution, logic, actions, assignment, dependencies, testing and impact. Missing configuration details will be explicitly marked as unavailable rather than guessed.</div>
    <div class="assessment-grid" id="assessmentSections">
     <div class="assessment-card"><h4>1. Rule identification</h4><p>Analyze a rule to populate its identity and ownership details.</p></div>
@@ -126,17 +126,12 @@ button:hover{filter:brightness(.96)}button:disabled{opacity:.5;cursor:not-allowe
    </div>
   </section>
  </div>
- <section class="panel">
-  <div class="flow-head"><div class="heading" style="margin:0"><span class="step">04</span><h3>Structured rule flow</h3></div><div class="actions" style="margin:0"><button class="secondary" onclick="exportPng()">Export PNG</button><button class="secondary" onclick="exportPdf()">Export PDF</button><button class="secondary" onclick="exportXlsx()">Export Excel</button></div></div>
-  <div class="flow-wrap"><div id="empty" class="empty"><div><div style="font-size:32px">◇</div><strong>No analysis generated</strong><p>Paste a screenshot and click Compute, interpret and transfer.</p></div></div><svg id="flow" xmlns="http://www.w3.org/2000/svg"></svg></div>
-  <div id="reviewNote" class="status" style="display:none"></div>
- </section>
 </section>
 </div>
-<div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.7</div>
+<div class="footer">RRuleLens · SAP SuccessFactors Business Rule Analyzer · Prototype V0.8</div>
 </main>
 <script>
-let imageFile=null,imageUrl=null,analysis=null,flowSteps=[],evidenceText="",ocrPasses=[];
+let imageFile=null,imageUrl=null,analysis=null,flowSteps=[],evidenceText="",ocrPasses=[],assessmentExportRows=[],currentAssessmentTitle="";
 const el=id=>document.getElementById(id);
 function setStatus(id,msg,type=""){el(id).textContent=msg;el(id).className="status "+type}
 function setEvidence(t){evidenceText=t||"";el("evidence").textContent=evidenceText||"No text extracted."}
@@ -257,8 +252,9 @@ function analyzeCurrent(auto=false){
 function renderSummary(){
  const t=normalize(analysis.raw),low=t.toLowerCase();
  const unavailable="Not available in the supplied screenshot/text. Requires rule configuration or administrative evidence.";
- const field=(label,value,status="found")=>`<p class="detail"><b>${escapeHtml(label)}:</b> <span class="evidence-tag ${status==="inferred"?"inferred":status==="missing"?"missing":""}">${status==="found"?"Found in source":status==="inferred"?"Inferred":"Not available"}</span>${escapeHtml(value)}</p>`;
- const card=(title,purpose,rows)=>`<article class="assessment-card"><h4>${title}</h4><p class="purpose">${purpose}</p>${rows.join("")}</article>`;
+ assessmentExportRows=[];
+ const field=(label,value,status="found")=>{assessmentExportRows.push({Section:currentAssessmentTitle,Item:label,"Evidence status":status==="found"?"Found in source":status==="inferred"?"Inferred":"Not available",Analysis:value});return `<p class="detail"><b>${escapeHtml(label)}:</b> <span class="evidence-tag ${status==="inferred"?"inferred":status==="missing"?"missing":""}">${status==="found"?"Found in source":status==="inferred"?"Inferred":"Not available"}</span>${escapeHtml(value)}</p>`};
+ const card=(title,purpose,rows)=>{currentAssessmentTitle=title;return `<article class="assessment-card"><h4>${title}</h4><p class="purpose">${purpose}</p>${rows.join("")}</article>`};
  const pick=(re)=>{const m=t.match(re);return m?m[1].trim():null};
  const ruleId=pick(/(?:rule\s*id|ruleid)\s*[:=#-]\s*([A-Za-z0-9_.-]+)/i);
  const owner=pick(/(?:rule\s*owner|owner)\s*[:=]\s*([A-Za-z0-9_. -]+)/i);
@@ -276,7 +272,7 @@ function renderSummary(){
  const actionLines=analysis.raw.split(/\r?\n/).map(x=>x.trim()).filter(x=>/raise message|set .+ to|create |update |delete |workflow|derive/i.test(x)).slice(0,6);
  const hasElse=/\belse\b/i.test(t),hasElseIf=/else\s*if/i.test(t);
  const cards=[];
- cards.push(card("1. Rule identification","Identify exactly which rule is being analysed.",[
+ currentAssessmentTitle="1. Rule identification";cards.push(card("1. Rule identification","Identify exactly which rule is being analysed.",[
   field("Rule Name",el("ruleName").value||"Not entered","inferred"),
   field("Rule ID",ruleId||unavailable,ruleId?"found":"missing"),
   field("Description",desc||unavailable,desc?"found":"missing"),
@@ -286,25 +282,25 @@ function renderSummary(){
  ]));
  const why=analysis.purpose;
  const automate=analysis.behaviour;
- cards.push(card("2. Business purpose","Explain the business reason behind the rule.",[
+ currentAssessmentTitle="2. Business purpose";cards.push(card("2. Business purpose","Explain the business reason behind the rule.",[
   field("Why was it created?",why,"inferred"),
   field("Business requirement",analysis.isSick&&analysis.limit!==null?`Appears to enforce a ${analysis.limit}-day sick-leave threshold within the configured period.`:"Not determinable from the available source; confirm the approved business requirement.","inferred"),
   field("Manual activity automated",analysis.raise?"Automates a validation and error message instead of relying only on manual review.":"No manual activity automation is confirmed.","inferred"),
   field("If the rule does not execute",analysis.isSick?"The sick-leave threshold validation may not run; an over-limit request could proceed unless another control prevents it.":"Failure consequence requires business-owner confirmation.","inferred")
  ]));
- cards.push(card("3. Technical context","Understand the data context in which the rule operates.",[
+ currentAssessmentTitle="3. Technical context";cards.push(card("3. Technical context","Understand the data context in which the rule operates.",[
   field("Base Object",base||unavailable,base?"inferred":"missing"),
   field("Rule Scenario",scenario||unavailable,scenario?"found":"missing"),
   field("Rule Purpose",analysis.purpose,"inferred"),
   field("Parameters",params,analysis.functions.length?"found":"missing"),
   field("Referenced objects and fields",refs.length?refs.join("; "):unavailable,refs.length?"found":"missing")
  ]));
- cards.push(card("4. Trigger / execution point","Understand when the rule executes.",[
+ currentAssessmentTitle="4. Trigger / execution point";cards.push(card("4. Trigger / execution point","Understand when the rule executes.",[
   field("Application event",events.length?events.join(", "):"onInit / onChange / onSave / onView / onPostSave not identified in supplied screenshot.","missing"),
   field("Processing action",process,analysis.createEdit?"found":"missing"),
   field("Execution assignment","Must be checked in the rule assignment/configuration screen; not visible in this screenshot.","missing")
  ]));
- cards.push(card("5. IF condition","Understand exactly when the rule logic becomes applicable.",[
+ currentAssessmentTitle="5. IF condition";cards.push(card("5. IF condition","Understand exactly when the rule logic becomes applicable.",[
   field("Conditions",condLines.length?condLines.join(" | "):"No condition lines confidently extracted.","inferred"),
   field("AND / OR operators",analysis.groups.length?analysis.groups.join("; "):"No logical operator confidently identified.","inferred"),
   field("Comparisons",analysis.limit!==null?`A comparison involving ${analysis.limit} was recognized. Exact operator/branch must be checked.`:"Comparison operators need manual source verification.","inferred"),
@@ -312,27 +308,27 @@ function renderSummary(){
   field("ELSE IF conditions",hasElseIf?"ELSE IF text detected; branch structure needs validation.":"No ELSE IF branch identified.","inferred"),
   field("ELSE branch",hasElse?"ELSE text detected; branch structure needs validation.":"No ELSE branch identified.","inferred")
  ]));
- cards.push(card("6. THEN / ELSE actions","Understand what the system actually does.",[
+ currentAssessmentTitle="6. THEN / ELSE actions";cards.push(card("6. THEN / ELSE actions","Understand what the system actually does.",[
   field("Actions",actionLines.length?actionLines.join(" | "):analysis.behaviour,"inferred"),
   field("Raise message",analysis.raise?"Raise Message with an error appears in the source.":"No Raise Message action identified.","inferred"),
   field("Set values / workflow / create or update","No such action is confirmed unless explicitly present in the extracted source.","missing"),
   field("Application-specific action",analysis.behaviour,"inferred")
  ]));
- cards.push(card("7. Rule assignment","A rule that exists but is not correctly assigned may never execute.",[
+ currentAssessmentTitle="7. Rule assignment";cards.push(card("7. Rule assignment","A rule that exists but is not correctly assigned may never execute.",[
   field("Where is the rule assigned?",unavailable,"missing"),
   field("Object or field invoking it",unavailable,"missing"),
   field("Associated event",unavailable,"missing"),
   field("BCUI / Configure Object Definitions / other", "Assignment location cannot be determined from a rule screenshot alone.","missing")
  ]));
  const dep=refs.length?refs.join("; "):"No referenced objects/fields confidently identified.";
- cards.push(card("8. Dependencies","Understand the rule's impact on the wider system.",[
+ currentAssessmentTitle="8. Dependencies";cards.push(card("8. Dependencies","Understand the rule's impact on the wider system.",[
   field("Referenced objects / fields",dep,refs.length?"found":"missing"),
   field("Foundation Object dependency","Not established by the supplied screenshot.","missing"),
   field("MDF object dependency",/mdf|custom object/i.test(t)?"MDF/custom object term appears; verify exact object.":"No MDF dependency identified.","inferred"),
   field("Workflow / integration dependency","No workflow or integration trigger is established by the supplied source.","missing"),
   field("Upstream / overwrite risk","Check whether another rule populates or later overwrites the same fields; not determinable from this screenshot.","missing")
  ]));
- cards.push(card("9. Testing and exceptions","Proposed tests are scenarios to validate, not tests already executed.",[
+ currentAssessmentTitle="9. Testing and exceptions";cards.push(card("9. Testing and exceptions","Proposed tests are scenarios to validate, not tests already executed.",[
   field("Positive test",analysis.isSick&&analysis.limit!==null?`Submit a sick-leave case within the ${analysis.limit}-day limit and confirm expected acceptance.`:"Test a record that satisfies the rule conditions.","inferred"),
   field("Negative test",analysis.isSick&&analysis.limit!==null?`Submit a case that exceeds ${analysis.limit} days and confirm the configured error message.`:"Test a record that violates the rule conditions.","inferred"),
   field("Boundary conditions",analysis.limit!==null?`Test exactly ${analysis.limit} days, just below and just above the threshold; confirm the comparison operator.`:"Test values immediately below, at and above each threshold.","inferred"),
@@ -340,7 +336,7 @@ function renderSummary(){
   field("Effective-dated scenarios","Test leave-period records whose effective dates overlap, start before or end after the employee time dates.","inferred"),
   field("Import versus UI","Compare UI save and import/API execution where applicable; confirm the assigned rule event supports both.","inferred")
  ]));
- cards.push(card("10. Impact and maintenance","Understand the consequences of modifying or disabling the rule.",[
+ currentAssessmentTitle="10. Impact and maintenance";cards.push(card("10. Impact and maintenance","Understand the consequences of modifying or disabling the rule.",[
   field("Business impact",analysis.isSick&&analysis.limit!==null?`May prevent sick-leave requests exceeding ${analysis.limit} days in the configured period; confirm policy interpretation with the business owner.`:analysis.purpose,"inferred"),
   field("Related modules",module||"Not identified confidently.","inferred"),
   field("Risks of changing the rule","A changed threshold, date window, lookup filter or comparison could allow excess leave or block valid requests.","inferred"),
@@ -386,12 +382,25 @@ Raise Message "SickLeaveEntitlementV2" with Error severity
 Maximum 120 Days sick leave can be taken within period.`;
  setEvidence(el("logic").value);analyzeCurrent();
 }
-function clearLogic(){el("logic").value="";analysis=null;flowSteps=[];el("flow").style.display="none";el("empty").style.display="grid";el("ruleCount").textContent="0";el("nodeCount").textContent="0";["purpose","behaviour","triggers"].forEach(id=>el(id).textContent="Not analyzed.");el("components").innerHTML='<span class="chip gray">Awaiting analysis</span>';el("summaryLead").textContent="After analysis, this block explains the rule's likely business purpose, behaviour and evidence confidence.";el("reviewNote").style.display="none";setStatus("logicStatus","Cleared.")}
+function clearLogic(){el("logic").value="";analysis=null;flowSteps=[];assessmentExportRows=[];el("flow").style.display="none";el("empty").style.display="grid";el("ruleCount").textContent="0";el("nodeCount").textContent="0";el("assessmentSections").innerHTML='<div class="assessment-card"><h4>Awaiting analysis</h4><p>Run Analyze rule to populate the 10 assessment areas.</p></div>';el("summaryLead").textContent="RRuleLens will organize the analysis into 10 assessment areas. Missing configuration details will be explicitly marked as unavailable rather than guessed.";el("confidence").textContent="Analysis confidence will appear here.";el("reviewNote").style.display="none";setStatus("logicStatus","Cleared.")}
 async function readSheet(){const f=el("sheetFile").files[0];if(!f)return setStatus("inputStatus","Choose an Excel or CSV file first.","err");if(!window.XLSX)return setStatus("inputStatus","Spreadsheet library did not load.","err");try{const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),sh=wb.Sheets[wb.SheetNames[0]],txt=XLSX.utils.sheet_to_csv(sh);setEvidence(txt);el("logic").value=txt;countFiles();analyzeCurrent(true);setStatus("inputStatus","Spreadsheet imported and analyzed. Check the source rows and interpretation.","ok")}catch(e){setStatus("inputStatus","Import failed: "+e.message,"err")}}
 async function readXml(){const f=el("xmlFile").files[0];if(!f)return setStatus("inputStatus","Choose an XML file first.","err");try{const doc=new DOMParser().parseFromString(await f.text(),"application/xml");if(doc.querySelector("parsererror"))throw Error("Invalid XML");const out=[];function walk(n,d=0){if(n.nodeType!==1)return;const attrs=[...n.attributes].map(a=>a.name+"="+a.value).join(" ");const val=[...n.childNodes].filter(c=>c.nodeType===3).map(c=>c.nodeValue.trim()).filter(Boolean).join(" ");out.push(" ".repeat(d*2)+"<"+n.tagName+(attrs?" "+attrs:"")+"> "+val);[...n.children].forEach(c=>walk(c,d+1))}walk(doc.documentElement);const t=out.join("\n");setEvidence(t);el("logic").value=t;countFiles();analyzeCurrent(true);setStatus("inputStatus","XML loaded and analyzed. XML element names are shown; this is not yet a schema-aware SAP rule parser.","ok")}catch(e){setStatus("inputStatus","XML read failed: "+e.message,"err")}}
 function exportPng(){if(!flowSteps.length)return alert("Analyze a rule first.");const s=el("flow"),copy=s.cloneNode(true);copy.setAttribute("xmlns","http://www.w3.org/2000/svg");const blob=new Blob([new XMLSerializer().serializeToString(copy)],{type:"image/svg+xml"}),url=URL.createObjectURL(blob),img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=2000;c.height=Number(s.getAttribute("height"))*2;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="RRuleLens_Flow.png";a.click();URL.revokeObjectURL(url)};img.src=url}
 function exportPdf(){if(!flowSteps.length)return alert("Analyze a rule first.");const w=window.open("","_blank");if(!w)return alert("Allow pop-ups to print PDF.");w.document.write("<title>RRuleLens analysis</title><style>body{font-family:Arial;padding:25px}svg{width:100%;height:auto}button{padding:10px}@media print{button{display:none}}</style><h1>RRuleLens – Rule Analysis</h1>");w.document.write("<h3>"+escapeHtml(el("ruleName").value)+"</h3><p>"+escapeHtml(analysis.purpose)+"</p><p>"+escapeHtml(analysis.behaviour)+"</p>"+el("flow").outerHTML+"<button onclick='print()'>Print / Save PDF</button>");w.document.close()}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function exportXlsx(){if(!flowSteps.length)return alert("Analyze a rule first.");if(!window.XLSX)return alert("Excel library unavailable.");const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Rule name",el("ruleName").value],["Purpose",analysis.purpose],["Behaviour",analysis.behaviour],["Components",analysis.components.join(", ")],["Triggers",analysis.trigger.join("; ")],["Confidence",analysis.confidence],["Warnings",analysis.warnings.join("; ")]]),"Purpose");XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(flowSteps.map((s,i)=>({Sequence:i+1,Type:s.type,Step:s.title,Explanation:s.detail}))),"Flow Steps");XLSX.writeFile(wb,"RRuleLens_V0.6_Analysis.xlsx")}
+function exportXlsx(){
+ if(!analysis)return alert("Analyze a rule first.");
+ if(!window.XLSX)return alert("Excel library unavailable.");
+ const wb=XLSX.utils.book_new();
+ const meta=[["RRuleLens – Rule Analysis"],["Rule name",el("ruleName").value],["Rule description",el("ruleDescription").value],["Interpretation purpose",analysis.purpose],["Rule behaviour",analysis.behaviour],["Components identified",analysis.components.join(", ")],["Triggers identified",analysis.trigger.join("; ")],["Interpretation confidence",analysis.confidence],["Warnings",analysis.warnings.join("; ")]];
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(meta),"Overview");
+ const rows=assessmentExportRows.length?assessmentExportRows:[{Section:"Block 03",Item:"Analysis", "Evidence status":"Not available",Analysis:"Run Analyze rule to populate the 10 assessment areas."}];
+ const ws=XLSX.utils.json_to_sheet(rows);
+ ws["!cols"]=[{wch:30},{wch:32},{wch:20},{wch:100}];
+ XLSX.utils.book_append_sheet(wb,ws,"Block 03 Analysis");
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(flowSteps.map((s,i)=>({Sequence:i+1,Type:s.type,Step:s.title,Explanation:s.detail}))),"Flow Steps");
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Extracted source evidence"],[evidenceText||analysis.raw]]),"Source Evidence");
+ XLSX.writeFile(wb,"RRuleLens_Rule_Analysis.xlsx");
+}
 </script>
 </body></html>
